@@ -26,22 +26,33 @@ SYNOPSIS
         tde [OPTION...] PROJECT_DIR...
 
 OPTIONS
-    --dry-run, -n   print tmux commands without doing anything
-    --help, -h      print this text
+    --dry-run, -n
+        print tmux commands without doing anything.
+
+    --help, -h
+        print this text.
+
+    -p,--panes=PANES
+        Open window with PANES panes. PANES is 1..9. Pane 1 is positioned on the left hand side of the
+        enclosing window; panes 2..PANES are arranged vertically on the right hand side. This option
+        defaults to PANES=1.
 
 DESCRIPTION
-    `tde` is a bash script which opens project directory workspaces in separate tmux windows. Each
-    window has two tmux panes with the Neovim editor in the left hand pane and a terminal in the right
-    hand pane. The script has two modes of operation:
+    `tde` is a bash script which opens project directory workspaces in separate tmux windows. The
+    script has two modes of operation:
 
-    New Session Mode: If no project directories are specified on the command-line a tmux session named
-    `tde` is created and project workspace windows are added from the list of directories read from the
-    `$HOME/.tde` configuration file.
+    New Session Mode:
 
-    Current Session Mode: If project directories are specified on the command-line then project
-    workspace windows are added to current tmux session.
+        If no project directories are specified on the command-line a tmux session named `tde` is
+        created and project workspace windows are added from the list of directories read from the
+        `$HOME/.tde` configuration file.
 
-    The `$HOME/.tde` configuration file contains a list of project directories, one per line. Blank
+    Current Session Mode:
+
+        If project directories are specified on the command-line then project workspace windows are
+        added to current tmux session.
+
+    The optional `$HOME/.tde` configuration file contains a list of project directories, one per line. Blank
     lines and lines beginning with a `#` character are skipped.
 
     For each project directory:
@@ -52,9 +63,10 @@ DESCRIPTION
        skip to the next project directory.
     3. A new tmux window is created with the newly generated window name and the window start directory
        set to the project directory.
-    4. The window is split into two vertical panes.
-    5. The 'nvim' command is executed in the left-hand pane.
-    6. The left-hand pane is selected.
+    5. If PANES is greater than 1 then pane 1 is split vertically creating a second pane.
+    6. If PANES is greater than 2 then panes 3..PANES are created by splitting pane 2 horizontally
+       PANES - 2 times.
+    7. The left-hand pane (pane 1) is selected.
 
     Finally the first newly created project window is selected and if `tde` was executed in New Session
     Mode the `tde` session is attached.
