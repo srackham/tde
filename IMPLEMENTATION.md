@@ -2,7 +2,7 @@
 
 ## Overview
 
-A specification for feature enhancements to the application in the current directory.
+A specification for feature enhancements to the `tde` application in the current directory.
 Read this file carefully before proceeding.
 
 - This Markdown file is structured as follows:
@@ -11,13 +11,12 @@ Read this file carefully before proceeding.
   - Within each feature specification section is a dated log in reverse chronological order (most recent entries first); each log entry is a level-3 Markdown section with headings formatted like `### <date>`.
   - A `### Description` section containing a condensed overview of the feature is also included in the feature specification.
 
-- Instructions in more recent log entries take precedence over ambiguous or conflicting instructions in older entries; this allows the feature specification to be progressively refined with the addition of new log entries while maintaining previous log entries.
-- Follow the guidelines in the `AGENTS.md` file.
-- Show your implementation plan first, then apply the changes.
+- In the case of ambiguous or conflicting log entries, the most recent log entry takes precedence over older entries; this allows the feature specification to be progressively refined with the addition of new log entries without having to change previous log entries.
+- Observe the instructions, conventions and guidelines in the `AGENTS.md` file.
 
-Invoke this file with the following prompt:
+This file is executed with the following prompt:
 
-"Review the guidelines and instructions in the `Overview` and `Feature: Add launch option to tde` sections in the `IMPLEMENTATION.md` file and propose the feature implementation. Follow the coding conventions in the `AGENTS.md` file, create an implementation, then show me the proposed changes before applying it."
+"Carefully review the guidelines and instructions in the `Overview` and `Feature: Add launch option to tde` sections in the `IMPLEMENTATION.md` file, create the feature implementation then ask for approval before applying it."
 
 ## Feature: Add launch option to tde
 
@@ -27,10 +26,9 @@ Add a new `--launch` command option to the `tde` script.
 
 ### 23-Aug-2025
 
-Implement the new `--launch` option in the `tde` script.
-
 - The _Usage_ section of in the `README.md` file has been updated with details of this new option. Compare it with the usage text in the `tde` script to see what has changed.
 - `COMMAND` is executed in pane `PANE` of each window.
 - `tde` exits with an error it the `COMMAND` does not exist or fails to execute.
 - Multiple `--launch` options can be specified.
 - Replace the current usage text in `tde` with the updated usage text from the _Usage_ section of the `README.md`.
+- Currently `tde` is hard-wired to run the `nvim` command (`PANE1_CMD`) in pane 1 of each window using the tmux `send-keys` command. Change this behaviour so that the commands specified by `--launch` options are executed in the specified panes.
