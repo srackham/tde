@@ -4,9 +4,7 @@
 
 - This project is a bash script (`tde`) for managing tmux sessions and windows.
 - No explicit build or lint commands are present.
-- To test, run the script manually with different options.
-- Example: `./tde --help` to see usage.
-- To run a single test, manually invoke the script with a specific project directory.
+- To test, run `./tde --help` command and check the output.
 
 ## Code Style Guidelines
 
@@ -37,10 +35,11 @@
 - Print error messages to stderr.
 - Validate all user inputs.
 
-## Cursor and Copilot Rules
+## Session Transcript
 
-- No `.cursor/rules/` directory or `.cursorrules` file found.
-- No `.github/copilot-instructions.md` file found.
+- Append all questions and responses to `TRANSCRIPT.md` in Markdown format.
+- Each interaction should be clearly formatted with timestamps and user/Crush labels.
+- Ensure the transcript file is created if it doesn't exist.
 
 ---
 

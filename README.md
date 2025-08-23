@@ -32,6 +32,9 @@ OPTIONS
     --help, -h
         print this text.
 
+    -l, --launch PANE:COMMAND
+        Execute shell COMMAND in pane PANE. PANE is 1..9.
+
     -p,--panes=PANES
         Open window with PANES panes. PANES is 1..9. Pane 1 is positioned on the left hand side of the
         enclosing window; panes 2..PANES are arranged vertically on the right hand side. This option
