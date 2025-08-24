@@ -16,7 +16,7 @@ Read this file carefully before proceeding.
 
 This file is executed with the following prompt:
 
-"Carefully review the guidelines and instructions in the `Overview` and `Feature: Add launch option to tde` sections in the `IMPLEMENTATION.md` file, create the feature implementation then ask for approval before applying it."
+"Carefully review the guidelines and instructions in the `Overview` and `Feature: Add launch option to tde` sections in the `IMPLEMENTATION.md` file. Create the feature implementation then ask for approval before applying it."
 
 ## Feature: Add launch option to tde
 
@@ -26,9 +26,7 @@ Add a new `--launch` command option to the `tde` script.
 
 ### 23-Aug-2025
 
-- The _Usage_ section of in the `README.md` file has been updated with details of this new option. Compare it with the usage text in the `tde` script to see what has changed.
-- `COMMAND` is executed in pane `PANE` of each window.
-- `tde` exits with an error it the `COMMAND` does not exist or fails to execute.
-- Multiple `--launch` options can be specified.
-- Replace the current usage text in `tde` with the updated usage text from the _Usage_ section of the `README.md`.
 - Currently `tde` is hard-wired to run the `nvim` command (`PANE1_CMD`) in pane 1 of each window using the tmux `send-keys` command. Change this behaviour so that the commands specified by `--launch` options are executed in the specified panes.
+- See the _Usage_ section of in the `README.md` file for a description of this new option.
+- `tde` exits with an error if the launch `COMMAND` does not exist or fails to execute.
+- Multiple `--launch` options can be specified.
