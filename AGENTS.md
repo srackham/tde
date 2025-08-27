@@ -35,11 +35,13 @@
 - Print error messages to stderr.
 - Validate all user inputs.
 
+<!--
 ## Session Transcript
 
 - Append all questions and responses to `TRANSCRIPT.md` in Markdown format.
 - Each interaction should be clearly formatted with timestamps and user/Crush labels.
 - Ensure the transcript file is created if it doesn't exist.
+-->
 
 ---
 

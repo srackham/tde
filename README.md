@@ -33,7 +33,8 @@ OPTIONS
         print this text.
 
     -l, --launch PANE:COMMAND
-        Execute shell COMMAND in pane PANE of each project workspace window. PANE is 1..9.
+        Execute shell COMMAND in pane PANE of each project workspace window. PANE must be between 1 and
+        the value specified by the --panes option. PANE defaults to 1.
 
     -p,--panes=PANES
         Open window with PANES panes. PANES is 1..9. Pane 1 is positioned on the left hand side of the
