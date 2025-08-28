@@ -129,10 +129,7 @@ execute_launch_commands() {
     local win_index="$2"
     local dir="$3"
 
-    if [[ ${#LAUNCH_CMDS[@]} -eq 0 ]]; then
-        # If no --launch commands, default to nvim in pane 1
-        tmux_cmd send-keys -t "$session_name:$win_index.1" "nvim" C-m
-    else
+    if [[ ${#LAUNCH_CMDS[@]} -gt 0 ]]; then
         for LAUNCH_CMD_SPEC in "${LAUNCH_CMDS[@]}"; do
             local pane_num="${LAUNCH_CMD_SPEC%%:*}"
             local command="${LAUNCH_CMD_SPEC#*:}"
