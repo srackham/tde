@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-PANE1_CMD="nvim"
 SESSION_NAME="tde"
+LAUNCH_CMDS=()
 
 print_help() {
     cat <<'EOF'
@@ -27,6 +27,10 @@ OPTIONS
     --help, -h
         print this text.
 
+    -l, --launch PANE:COMMAND
+        Execute shell COMMAND in pane PANE of each project workspace window. PANE must be between 1 and
+        the value specified by the --panes option. PANE defaults to 1.
+
     -p,--panes=PANES
         Open window with PANES panes. PANES is 1..9. Pane 1 is positioned on the left hand side of the
         enclosing window; panes 2..PANES are arranged vertically on the right hand side. Panes 2..PANES are
@@ -42,7 +46,7 @@ DESCRIPTION
         created and project workspace windows are added from the list of directories read from the
         `$HOME/.tde` configuration file.
 
-    Current Session Mode:
+    Current Session Mode: 
 
         If project directories are specified on the command-line then project workspace windows are
         added to current tmux session.
@@ -52,7 +56,7 @@ DESCRIPTION
 
     For each project directory:
 
-    1. A new window name is generated from the project directory's base name minus its file name extension
+    1. A new window name is generated from the project directory\'s base name minus its file name extension
        and with remaining period characters replaced with hyphens.
     2. If a tmux window with the same name already exists in the target session then print a warning and
        skip to the next project directory.
@@ -100,6 +104,34 @@ window_index_by_name() {
     fi
 }
 
+# Execute launch commands in specified panes
+execute_launch_commands() {
+    local session_name="$1"
+    local win_index="$2"
+    local dir="$3"
+
+    if [[ ${#LAUNCH_CMDS[@]} -eq 0 ]]; then
+        # If no --launch commands, default to nvim in pane 1
+        tmux_cmd send-keys -t "$session_name:$win_index.1" "nvim" C-m
+    else
+        for LAUNCH_CMD_SPEC in "${LAUNCH_CMDS[@]}"; do
+            local pane_num="${LAUNCH_CMD_SPEC%%:*}"
+            local command="${LAUNCH_CMD_SPEC#*:}"
+
+            if ! [[ "$pane_num" =~ ^[1-9]$ ]] || (( pane_num < 1 || pane_num > PANES )); then
+                echo "Error: Invalid pane number '$pane_num' for --launch option. Must be between 1 and $PANES." >&2
+                exit 1
+            fi
+
+            if ! command -v "$command" &> /dev/null; then
+                echo "Error: Launch command '$command' not found or not executable." >&2
+                exit 1
+            fi
+            tmux_cmd send-keys -t "$session_name:$win_index.$pane_num" "$command" C-m
+        done
+    fi
+}
+
 # Parse options
 DRY_RUN=0
 PANES=1
@@ -118,12 +150,20 @@ while [[ $# -gt 0 ]]; do
             fi
             shift 2
             ;;
-        --panes=*)
+        --panes=*) 
             PANES="${1#*=}"
             if ! [[ "$PANES" =~ ^[1-9]$ ]]; then
                 echo "Error: PANES must be between 1 and 9" >&2
                 exit 1
             fi
+            shift
+            ;;
+        -l|--launch)
+            LAUNCH_CMDS+=("$2")
+            shift 2
+            ;;
+        --launch=*)
+            LAUNCH_CMDS+=("${1#*=}")
             shift
             ;;
         --help|-h)
@@ -226,7 +266,7 @@ if [[ $INSIDE_TMUX -eq 1 ]]; then
             tmux_cmd select-layout -E -t "$SESSION_NAME:$WIN_INDEX.2"
         fi
         
-        tmux_cmd send-keys -t "$SESSION_NAME:$WIN_INDEX.1" "$PANE1_CMD" C-m
+        execute_launch_commands "$SESSION_NAME" "$WIN_INDEX" "$DIR"
         tmux_cmd select-pane -t "$SESSION_NAME:$WIN_INDEX.1"
         NEW_WINDOWS+=("$WIN_INDEX")
         # Update EXISTING_WINDOWS so subsequent checks are accurate
@@ -255,7 +295,7 @@ else
         tmux_cmd select-layout -E -t "$SESSION_NAME:$FIRST_WIN_INDEX.2"
     fi
     
-    tmux_cmd send-keys -t "$SESSION_NAME:$FIRST_WIN_INDEX.1" "$PANE1_CMD" C-m
+    execute_launch_commands "$SESSION_NAME" "$FIRST_WIN_INDEX" "$FIRST_DIR"
     tmux_cmd select-pane -t "$SESSION_NAME:$FIRST_WIN_INDEX.1"
     NEW_WINDOWS+=("$FIRST_WIN_INDEX")
     # Get existing window names in the session (now includes the first window)
@@ -280,7 +320,7 @@ else
             tmux_cmd select-layout -E -t "$SESSION_NAME:$WIN_INDEX.2"
         fi
         
-        tmux_cmd send-keys -t "$SESSION_NAME:$WIN_INDEX.1" "$PANE1_CMD" C-m
+        execute_launch_commands "$SESSION_NAME" "$WIN_INDEX" "$DIR"
         tmux_cmd select-pane -t "$SESSION_NAME:$WIN_INDEX.1"
         NEW_WINDOWS+=("$WIN_INDEX")
         EXISTING_WINDOWS+=$'\n'"$WIN_NAME"
