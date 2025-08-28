@@ -11,7 +11,7 @@ NAME
     tde - open project workspaces
 
 SYNOPSIS
-    New Session Mode: Create 'tde' tmux session and add project workspace windows from the `$HOME/.tde`
+    New Session Mode: Create 'tde' tmux session and add project workspace windows from the $HOME/.tde
     configuration file:
 
         tde [OPTION...]
@@ -51,12 +51,12 @@ DESCRIPTION
         If project directories are specified on the command-line then project workspace windows are
         added to current tmux session.
 
-    The optional `$HOME/.tde` configuration file contains a list of project directories, one per line. Blank
-    lines and lines beginning with a `#` character are skipped.
+    The optional $HOME/.tde configuration file contains a list of project directories, one per line. Blank
+    lines and lines beginning with a # character are skipped.
 
     For each project directory:
 
-    1. A new window name is generated from the project directory\'s base name minus its file name extension
+    1. A new window name is generated from the project directory's base name minus its file name extension
        and with remaining period characters replaced with hyphens.
     2. If a tmux window with the same name already exists in the target session then print a warning and
        skip to the next project directory.
@@ -104,8 +104,27 @@ window_index_by_name() {
     fi
 }
 
+# Validate launch commands
+validate_launch_commands() {
+    for LAUNCH_CMD_SPEC in "${LAUNCH_CMDS[@]}"; do
+        local pane_num="${LAUNCH_CMD_SPEC%%:*}"
+        local command="${LAUNCH_CMD_SPEC#*:}"
+
+        if ! [[ "$pane_num" =~ ^[1-9]$ ]] || (( pane_num < 1 || pane_num > PANES )); then
+            echo "Error: Invalid pane number '$pane_num' for --launch option. Must be between 1 and $PANES." >&2
+            exit 1
+        fi
+
+        if ! command -v "$command" &> /dev/null; then
+            echo "Error: Launch command '$command' not found or not executable." >&2
+            exit 1
+        fi
+    done
+}
+
 # Execute launch commands in specified panes
 execute_launch_commands() {
+
     local session_name="$1"
     local win_index="$2"
     local dir="$3"
@@ -117,16 +136,6 @@ execute_launch_commands() {
         for LAUNCH_CMD_SPEC in "${LAUNCH_CMDS[@]}"; do
             local pane_num="${LAUNCH_CMD_SPEC%%:*}"
             local command="${LAUNCH_CMD_SPEC#*:}"
-
-            if ! [[ "$pane_num" =~ ^[1-9]$ ]] || (( pane_num < 1 || pane_num > PANES )); then
-                echo "Error: Invalid pane number '$pane_num' for --launch option. Must be between 1 and $PANES." >&2
-                exit 1
-            fi
-
-            if ! command -v "$command" &> /dev/null; then
-                echo "Error: Launch command '$command' not found or not executable." >&2
-                exit 1
-            fi
             tmux_cmd send-keys -t "$session_name:$win_index.$pane_num" "$command" C-m
         done
     fi
@@ -162,7 +171,7 @@ while [[ $# -gt 0 ]]; do
             LAUNCH_CMDS+=("$2")
             shift 2
             ;;
-        --launch=*)
+        --launch=*) 
             LAUNCH_CMDS+=("${1#*=}")
             shift
             ;;
@@ -180,6 +189,10 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+
+# Validate launch commands after all options are parsed
+validate_launch_commands
 
 INSIDE_TMUX=0
 if [[ -n "${TMUX:-}" ]]; then
