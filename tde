@@ -27,14 +27,14 @@ OPTIONS
     --help, -h
         print this text.
 
-    -l, --launch PANE:COMMAND
+    -l, --launch [PANE:]COMMAND
         Execute shell COMMAND in pane PANE of each project workspace window. PANE must be between 1 and
         the value specified by the --panes option. PANE defaults to 1.
 
     -p,--panes=PANES
         Open window with PANES panes. PANES is 1..9. Pane 1 is positioned on the left hand side of the
-        enclosing window; panes 2..PANES are arranged vertically on the right hand side. Panes 2..PANES are
-        spread evenly from top to bottom. This option defaults to PANES=1.
+        enclosing window; panes 2..PANES are arranged vertically on the right hand side. This option
+        value defaults 1.
 
 DESCRIPTION
     `tde` is a bash script which opens project directory workspaces in separate tmux windows. The
@@ -107,8 +107,16 @@ window_index_by_name() {
 # Validate launch commands
 validate_launch_commands() {
     for LAUNCH_CMD_SPEC in "${LAUNCH_CMDS[@]}"; do
-        local pane_num="${LAUNCH_CMD_SPEC%%:*}"
-        local command="${LAUNCH_CMD_SPEC#*:}"
+        local pane_num
+        local command
+
+        if [[ "$LAUNCH_CMD_SPEC" == *:* ]]; then
+            pane_num="${LAUNCH_CMD_SPEC%%:*}"
+            command="${LAUNCH_CMD_SPEC#*:}"
+        else
+            pane_num="1" # Default to pane 1
+            command="$LAUNCH_CMD_SPEC"
+        fi
 
         if ! [[ "$pane_num" =~ ^[1-9]$ ]] || (( pane_num < 1 || pane_num > PANES )); then
             echo "Error: Invalid pane number '$pane_num' for --launch option. Must be between 1 and $PANES." >&2
@@ -131,8 +139,16 @@ execute_launch_commands() {
 
     if [[ ${#LAUNCH_CMDS[@]} -gt 0 ]]; then
         for LAUNCH_CMD_SPEC in "${LAUNCH_CMDS[@]}"; do
-            local pane_num="${LAUNCH_CMD_SPEC%%:*}"
-            local command="${LAUNCH_CMD_SPEC#*:}"
+            local pane_num
+            local command
+
+            if [[ "$LAUNCH_CMD_SPEC" == *:* ]]; then
+                pane_num="${LAUNCH_CMD_SPEC%%:*}"
+                command="${LAUNCH_CMD_SPEC#*:}"
+            else
+                pane_num="1" # Default to pane 1
+                command="$LAUNCH_CMD_SPEC"
+            fi
             tmux_cmd send-keys -t "$session_name:$win_index.$pane_num" "$command" C-m
         done
     fi
