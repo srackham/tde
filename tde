@@ -123,7 +123,8 @@ validate_launch_commands() {
             exit 1
         fi
 
-        if ! command -v "$command" &> /dev/null; then
+        local base_command=$(echo "$command" | awk '{print $1}')
+        if ! command -v "$base_command" &> /dev/null; then
             echo "Error: Launch command '$command' not found or not executable." >&2
             exit 1
         fi
