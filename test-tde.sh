@@ -18,7 +18,7 @@ run_test() {
     # We need to redirect stderr to /dev/null because tde prints warnings to stderr
     # when running in current session mode without an actual tmux session.
     # The dry-run output is always to stdout.
-    actual_output=$(./tde --dry-run $command 2>/dev/null || true)
+    actual_output=$(bash -c "./tde --dry-run $command 2>/dev/null || true")
 
     # Normalize line endings for comparison
     actual_output=$(echo "$actual_output" | sed 's/\r$//')
@@ -71,6 +71,9 @@ tmux select-layout -E -t tde:999.2
 tmux send-keys -t tde:999.1 nvim C-m
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999"
+
+run_test "Help message (first two lines)" "--help | head -n 2" "NAME
+    tde - open project workspaces"
 
 echo "All tests passed!"
 rm -rf "$TEST_DIR"
