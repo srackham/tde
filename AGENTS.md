@@ -4,7 +4,7 @@
 
 - This project is a bash script (`tde`) for managing tmux sessions and windows.
 - No explicit build or lint commands are present.
-- To test, run `./tde --help` command and check the output.
+- All temporary files should be confined to the `/tmp` directory.
 
 ## Code Style Guidelines
 
