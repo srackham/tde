@@ -123,10 +123,10 @@ validate_launch_commands() {
             exit 1
         fi
 
-        if ! command -v "$command" &> /dev/null; then
-            echo "Error: Launch command '$command' not found or not executable." >&2
-            exit 1
-        fi
+        # if ! command -v "$command" &> /dev/null; then
+        #     echo "Error: Launch command '$command' not found or not executable." >&2
+        #     exit 1
+        # fi
     done
 }
 
@@ -149,6 +149,7 @@ execute_launch_commands() {
                 pane_num="1" # Default to pane 1
                 command="$LAUNCH_CMD_SPEC"
             fi
+            command="${command// / Space }"
             tmux_cmd send-keys -t "$session_name:$win_index.$pane_num" "$command" C-m
         done
     fi
