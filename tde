@@ -149,8 +149,8 @@ execute_launch_commands() {
                 pane_num="1" # Default to pane 1
                 command="$LAUNCH_CMD_SPEC"
             fi
-            command="${command// / Space }"
-            tmux_cmd send-keys -t "$session_name:$win_index.$pane_num" "$command" C-m
+            tmux_cmd send-keys -t "$session_name:$win_index.$pane_num" -l "'$command'"
+            tmux_cmd send-keys -t "$session_name:$win_index.$pane_num" Enter
         done
     fi
 }
