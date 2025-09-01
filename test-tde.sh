@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+FIXME: This script only works if run from within a tde tmux session. tde needs some way to simulate TMUX when testing.
+
 set -euo pipefail
 
 # Define a temporary directories for testing
@@ -12,7 +14,13 @@ run_test() {
     local test_name="$1"
     local command="./tde --dry-run $2"
     local expected_output="$3"
-    local expected_exit_code="${4:-0}"  # Defaults to 0 if not provided
+    local expected_exit_code="${4:-0}" # Defaults to 0 if not provided
+    local env_vars="${5:-}"
+
+    # Prepend env_vars to command if specified
+    if [[ -n "$env_vars" ]]; then
+        command="$env_vars $command"
+    fi
 
     # Execute the command and capture its output and exit code
     set +e
@@ -347,5 +355,26 @@ tmux select-window -t tde:999"
 run_test "Tesst Case 21: Help message (first two lines)" "--help | head -n 2" "NAME
     tde - open project workspaces"
 
+# Tests for invalid command options
+run_test "Invalid --panes value (0)" "-p 0 /tmp" "Error: PANES must be between 1 and 9" 1
+run_test "Invalid --panes value (10)" "--panes=10 /tmp" "Error: PANES must be between 1 and 9" 1
+run_test "Invalid --panes value (abc)" "-p abc /tmp" "Error: PANES must be between 1 and 9" 1
+run_test "Invalid --launch pane number (0)" "-p 2 -l 0:ls /tmp" "Error: Invalid pane number '0' for --launch option. Must be between 1 and 2." 1
+run_test "Invalid --launch pane number (too high)" "-p 2 -l 3:ls /tmp" "Error: Invalid pane number '3' for --launch option. Must be between 1 and 2." 1
+run_test "Invalid --launch pane number (non-numeric)" "-p 2 -l x:ls /tmp" "Error: Invalid pane number 'x' for --launch option. Must be between 1 and 2." 1
+
+run_test "New Session Mode inside tmux" "" "Error: No project directories specified; cannot run New Session Mode inside tmux." 1
+run_test "Current Session Mode outside tmux" "/tmp" "Error: PROJECT_DIR arguments specified but not running inside a tmux session." 1 TMUX=
+run_test "Missing project directory" "/nonexistent/path" "Error: The following project directories do not exist:
+  /nonexistent/path" 1
+
+# FIXME: Doesn't work because tde can't simulate the TMUX/non-TMUX mode.
+# EMPTY_HOME="/tmp/empty_home"
+# mkdir -p "$EMPTY_HOME"
+# touch "$EMPTY_HOME/.tde"
+# run_test "No project directories found in $EMPTY_HOME/.tde" "" "Error: No project directories found in $EMPTY_HOME/.tde" 1 "HOME=$EMPTY_HOME TMUX="
+# rm -rf "$EMPTY_HOME"
+
+echo
 echo "All tests passed!"
 rm -rf /tmp/test-tde
