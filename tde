@@ -74,7 +74,7 @@ EOF
 
 # Print or execute tmux commands
 tmux_cmd() {
-    if [[ "$DRY_RUN" == 1 ]]; then
+    if [[ "$DRY_RUN" == 1 || -n "$TEST_TDE" ]]; then
         echo "tmux $*"
     else
         tmux "$@"
@@ -89,7 +89,7 @@ window_name() {
 
 # Get a list of existing window names in a session
 existing_windows() {
-    if [[ "$DRY_RUN" == 1 ]]; then
+    if [[ -n "$TEST_TDE" ]]; then
         echo ""
     else
         local session="$1"
@@ -99,7 +99,7 @@ existing_windows() {
 
 # Get window index by window name in a session
 window_index_by_name() {
-    if [[ "$DRY_RUN" == 1 ]]; then
+    if [[ "$DRY_RUN" == 1 || -n "$TEST_TDE" ]]; then
         echo "999"
     else
         local session="$1"
@@ -221,7 +221,7 @@ if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
         echo "Error: No project directories specified; cannot run New Session Mode inside tmux." >&2
         exit 1
     fi
-    if [[ "$DRY_RUN" == 0 ]]; then
+    if [[ -z "$TEST_TDE" ]]; then
         if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
               echo "Attaching to existing session '$SESSION_NAME'."
               tmux_cmd attach-session -t "$SESSION_NAME"
@@ -271,7 +271,7 @@ fi
 
 if [[ $INSIDE_TMUX -eq 1 ]]; then
     # Current Session Mode: Add windows to current session
-    if [[ "$DRY_RUN" == 0 ]]; then
+    if [[ -z "$TEST_TDE" ]]; then
         # TODO: Check does this make sense i.e. can we open in non-tde sessions?
         SESSION_NAME="$(tmux display-message -p '#S')"
     fi
