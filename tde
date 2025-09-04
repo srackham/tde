@@ -89,8 +89,12 @@ window_name() {
 
 # Get a list of existing window names in a session
 existing_windows() {
-    local session="$1"
-    tmux list-windows -t "$session" -F '#W' 2>/dev/null || true
+    if [[ "$DRY_RUN" == 1 ]]; then
+        echo ""
+    else
+        local session="$1"
+        tmux list-windows -t "$session" -F '#W' 2>/dev/null || true
+    fi
 }
 
 # Get window index by window name in a session
@@ -123,6 +127,7 @@ validate_launch_commands() {
             exit 1
         fi
 
+        # TODO: drop old code
         # if ! command -v "$command" &> /dev/null; then
         #     echo "Error: Launch command '$command' not found or not executable." >&2
         #     exit 1
@@ -216,10 +221,12 @@ if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
         echo "Error: No project directories specified; cannot run New Session Mode inside tmux." >&2
         exit 1
     fi
-    if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
-        echo "Attaching to existing session '$SESSION_NAME'."
-        tmux_cmd attach-session -t "$SESSION_NAME"
-        exit
+    if [[ "$DRY_RUN" == 0 ]]; then
+        if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+              echo "Attaching to existing session '$SESSION_NAME'."
+              tmux_cmd attach-session -t "$SESSION_NAME"
+              exit
+          fi
     fi
     # Read project directories from $HOME/.tde
     while IFS= read -r line; do
@@ -264,7 +271,10 @@ fi
 
 if [[ $INSIDE_TMUX -eq 1 ]]; then
     # Current Session Mode: Add windows to current session
-    SESSION_NAME="$(tmux display-message -p '#S')"
+    if [[ "$DRY_RUN" == 0 ]]; then
+        # TODO: Check does this make sense i.e. can we open in non-tde sessions?
+        SESSION_NAME="$(tmux display-message -p '#S')"
+    fi
     tmux_cmd set-option -t "$SESSION_NAME" -g base-index 1
     tmux_cmd set-window-option -t "$SESSION_NAME" -g pane-base-index 1
     # Get existing window names in the session

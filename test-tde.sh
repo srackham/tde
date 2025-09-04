@@ -1,13 +1,26 @@
 #!/usr/bin/env bash
 
-FIXME: This script only works if run from within a tde tmux session. tde needs some way to simulate TMUX when testing.
-
 set -euo pipefail
 
-# Define a temporary directories for testing
-PROJECT1="/tmp/test-tde/project1"
-PROJECT2="/tmp/test-tde/project2"
-mkdir -p $PROJECT1 $PROJECT2
+# Create temporary directories for testing
+TEST_DIR=/tmp/test-tde
+TEST_HOME="$TEST_DIR/home"
+TEST_TDE_CONF="$TEST_HOME/.tde"
+
+setup() {
+    mkdir -p "$TEST_DIR"
+    mkdir -p "$TEST_HOME"
+    touch "$TEST_TDE_CONF"
+    PROJECT1="$TEST_DIR/project1"
+    PROJECT2="$TEST_DIR/project2"
+    mkdir -p $PROJECT1 $PROJECT2
+}
+setup
+
+cleanup() {
+    rm -rf "$TEST_DIR"
+}
+# trap cleanup EXIT
 
 # Function to run a test
 run_test() {
@@ -15,7 +28,7 @@ run_test() {
     local command="./tde --dry-run $2"
     local expected_output="$3"
     local expected_exit_code="${4:-0}" # Defaults to 0 if not provided
-    local env_vars="${5:-}"
+    local env_vars="${5:-TMUX=test-tde}"
 
     # Prepend env_vars to command if specified
     if [[ -n "$env_vars" ]]; then
@@ -62,34 +75,34 @@ run_test() {
     fi
 }
 
-run_test "Basic dry-run with a single directory" "/tmp" "tmux set-option -t tde -g base-index 1
+run_test "Basic dry-run with a single directory" "$PROJECT1" "tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
-tmux new-window -c /tmp -n tmp
+tmux new-window -c $PROJECT1 -n $(basename "$PROJECT1")
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999"
 
-run_test "Dry-run with 2 panes" "-p 2 /tmp" "tmux set-option -t tde -g base-index 1
+run_test "Dry-run with 2 panes" "-p 2 $PROJECT1" "tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
-tmux new-window -c /tmp -n tmp
-tmux split-window -h -t tde:999 -c /tmp
+tmux new-window -c $PROJECT1 -n $(basename "$PROJECT1")
+tmux split-window -h -t tde:999 -c $PROJECT1
 tmux select-layout -E -t tde:999.2
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999"
 
-run_test "Dry-run with 2 panes and explicit pane 1 launch command" "-p 2 -l 1:nvim /tmp" "tmux set-option -t tde -g base-index 1
+run_test "Dry-run with 2 panes and explicit pane 1 launch command" "-p 2 -l 1:nvim $PROJECT1" "tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
-tmux new-window -c /tmp -n tmp
-tmux split-window -h -t tde:999 -c /tmp
+tmux new-window -c $PROJECT1 -n $(basename "$PROJECT1")
+tmux split-window -h -t tde:999 -c $PROJECT1
 tmux select-layout -E -t tde:999.2
 tmux send-keys -t tde:999.1 -l nvim
 tmux send-keys -t tde:999.1 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999"
 
-run_test "Dry-run with 2 panes and implicit pane 1 launch command" "-p 2 -l nvim /tmp" "tmux set-option -t tde -g base-index 1
+run_test "Dry-run with 2 panes and implicit pane 1 launch command" "-p 2 -l nvim $PROJECT1" "tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
-tmux new-window -c /tmp -n tmp
-tmux split-window -h -t tde:999 -c /tmp
+tmux new-window -c $PROJECT1 -n $(basename "$PROJECT1")
+tmux split-window -h -t tde:999 -c $PROJECT1
 tmux select-layout -E -t tde:999.2
 tmux send-keys -t tde:999.1 -l nvim
 tmux send-keys -t tde:999.1 Enter
@@ -356,25 +369,20 @@ run_test "Tesst Case 21: Help message (first two lines)" "--help | head -n 2" "N
     tde - open project workspaces"
 
 # Tests for invalid command options
-run_test "Invalid --panes value (0)" "-p 0 /tmp" "Error: PANES must be between 1 and 9" 1
-run_test "Invalid --panes value (10)" "--panes=10 /tmp" "Error: PANES must be between 1 and 9" 1
-run_test "Invalid --panes value (abc)" "-p abc /tmp" "Error: PANES must be between 1 and 9" 1
-run_test "Invalid --launch pane number (0)" "-p 2 -l 0:ls /tmp" "Error: Invalid pane number '0' for --launch option. Must be between 1 and 2." 1
-run_test "Invalid --launch pane number (too high)" "-p 2 -l 3:ls /tmp" "Error: Invalid pane number '3' for --launch option. Must be between 1 and 2." 1
-run_test "Invalid --launch pane number (non-numeric)" "-p 2 -l x:ls /tmp" "Error: Invalid pane number 'x' for --launch option. Must be between 1 and 2." 1
+run_test "Invalid --panes value (0)" "-p 0 $PROJECT1" "Error: PANES must be between 1 and 9" 1
+run_test "Invalid --panes value (10)" "--panes=10 $PROJECT1" "Error: PANES must be between 1 and 9" 1
+run_test "Invalid --panes value (abc)" "-p abc $PROJECT1" "Error: PANES must be between 1 and 9" 1
+run_test "Invalid --launch pane number (0)" "-p 2 -l 0:ls $PROJECT1" "Error: Invalid pane number '0' for --launch option. Must be between 1 and 2." 1
+run_test "Invalid --launch pane number (too high)" "-p 2 -l 3:ls $PROJECT1" "Error: Invalid pane number '3' for --launch option. Must be between 1 and 2." 1
+run_test "Invalid --launch pane number (non-numeric)" "-p 2 -l x:ls $PROJECT1" "Error: Invalid pane number 'x' for --launch option. Must be between 1 and 2." 1
 
 run_test "New Session Mode inside tmux" "" "Error: No project directories specified; cannot run New Session Mode inside tmux." 1
-run_test "Current Session Mode outside tmux" "/tmp" "Error: PROJECT_DIR arguments specified but not running inside a tmux session." 1 TMUX=
+run_test "Current Session Mode outside tmux" "$PROJECT1" "Error: PROJECT_DIR arguments specified but not running inside a tmux session." 1 TMUX=
 run_test "Missing project directory" "/nonexistent/path" "Error: The following project directories do not exist:
   /nonexistent/path" 1
 
 # FIXME: Doesn't work because tde can't simulate the TMUX/non-TMUX mode.
-# EMPTY_HOME="/tmp/empty_home"
-# mkdir -p "$EMPTY_HOME"
-# touch "$EMPTY_HOME/.tde"
-# run_test "No project directories found in $EMPTY_HOME/.tde" "" "Error: No project directories found in $EMPTY_HOME/.tde" 1 "HOME=$EMPTY_HOME TMUX="
-# rm -rf "$EMPTY_HOME"
+# run_test "No project directories found in $TEST_TDE_CONF" "" "Error: No project directories found in $TEST_TDE_CONF" 1 "HOME=$TEST_TDE_CONF TMUX="
 
 echo
 echo "All tests passed!"
-rm -rf /tmp/test-tde
