@@ -236,7 +236,7 @@ if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
         PROJECT_DIRS+=("$expanded_line")
     done < "$HOME/.tde"
     if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
-        echo "Error: No project directories found in \$HOME/.tde" >&2
+        echo "Error: No project directories found in $HOME/.tde" >&2
         exit 1
     fi
 else

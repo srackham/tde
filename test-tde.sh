@@ -28,7 +28,7 @@ run_test() {
     local command="TEST_TDE=true ./tde $2"
     local expected_output="$3"
     local expected_exit_code="${4:-0}" # Defaults to 0 if not provided
-    local env_vars="${5:-TMUX=test-tde}"
+    local env_vars="${5:-TMUX=true}"
 
     # Prepend env_vars to command if specified
     if [[ -n "$env_vars" ]]; then
@@ -380,9 +380,7 @@ run_test "New Session Mode inside tmux" "" "Error: No project directories specif
 run_test "Current Session Mode outside tmux" "$PROJECT1" "Error: PROJECT_DIR arguments specified but not running inside a tmux session." 1 TMUX=
 run_test "Missing project directory" "/nonexistent/path" "Error: The following project directories do not exist:
   /nonexistent/path" 1
-
-# FIXME: Doesn't work because tde can't simulate the TMUX/non-TMUX mode.
-# run_test "No project directories found in $TEST_TDE_CONF" "" "Error: No project directories found in $TEST_TDE_CONF" 1 "HOME=$TEST_TDE_CONF TMUX="
+run_test "No project directories found in $TEST_TDE_CONF" "" "Error: No project directories found in $TEST_TDE_CONF" 1 "HOME=$TEST_HOME TMUX="
 
 echo
 echo "All tests passed!"
