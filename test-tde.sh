@@ -25,7 +25,7 @@ cleanup() {
 # Function to run a test
 run_test() {
     local test_name="$1"
-    local command="TEST_TDE=1 ./tde $2"
+    local command="TEST_TDE=true ./tde $2"
     local expected_output="$3"
     local expected_exit_code="${4:-0}" # Defaults to 0 if not provided
     local env_vars="${5:-TMUX=test-tde}"
