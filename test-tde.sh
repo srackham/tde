@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+trap 'echo; echo "$TEST_COUNT tests passed!"' EXIT
+# trap cleanup EXIT
+
 set -euo pipefail
 
 # Create temporary directories for testing
@@ -20,7 +23,6 @@ setup
 cleanup() {
     rm -rf "$TEST_DIR"
 }
-# trap cleanup EXIT
 
 # Function to run a test
 run_test() {
@@ -385,5 +387,4 @@ run_test "Missing project directory" "./tde /nonexistent/path" "Error: The follo
   /nonexistent/path" 1
 run_test "No project directories found in $TEST_TDE_CONF" "" "Error: No project directories found in $TEST_TDE_CONF" 1 "HOME=$TEST_HOME TMUX="
 
-echo
-echo "$TEST_COUNT tests passed!"
+exit
