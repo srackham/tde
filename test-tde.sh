@@ -13,6 +13,7 @@ TEST_TDE_CONF="$TEST_HOME/.tde"
 setup() {
     mkdir -p "$TEST_DIR"
     mkdir -p "$TEST_HOME"
+    [ -f  "$TEST_TDE_CONF" ] && rm "$TEST_TDE_CONF"
     touch "$TEST_TDE_CONF"
     PROJECT1="$TEST_DIR/project1"
     PROJECT2="$TEST_DIR/project2"
@@ -30,7 +31,7 @@ run_test() {
     local command="TEST_TDE=true $2"
     local expected_output="$3"
     local expected_exit_code="${4:-0}" # Defaults to 0 if not provided
-    local env_vars="${5:-TMUX=true}"
+    local env_vars="${5:-TMUX=true} HOME=$TEST_HOME"
 
     # Prepend env_vars to command if specified
     if [[ -n "$env_vars" ]]; then
@@ -77,6 +78,14 @@ run_test() {
         exit 1
     fi
 }
+
+# Function to write .tde configuration file.
+write_conf() {
+    local content="$1"
+    # Overwrite config file
+    printf "%s\n" "$content" > "$TEST_TDE_CONF"
+}
+
 
 TEST_COUNT=0
 
@@ -374,17 +383,43 @@ run_test "Tesst Case 21: Help message (first two lines)" "./tde --help | head -n
     tde - open project workspaces"
 
 # Tests for invalid command options
-run_test "Invalid --panes value (0)" "./tde -p 0 $PROJECT1" "Error: PANES must be between 1 and 9" 1
-run_test "Invalid --panes value (10)" "./tde --panes=10 $PROJECT1" "Error: PANES must be between 1 and 9" 1
-run_test "Invalid --panes value (abc)" "./tde -p abc $PROJECT1" "Error: PANES must be between 1 and 9" 1
-run_test "Invalid --launch pane number (0)" "./tde -p 2 -l 0:ls $PROJECT1" "Error: Invalid pane number '0' for --launch option. Must be between 1 and 2." 1
-run_test "Invalid --launch pane number (too high)" "./tde -p 2 -l 3:ls $PROJECT1" "Error: Invalid pane number '3' for --launch option. Must be between 1 and 2." 1
-run_test "Invalid --launch pane number (non-numeric)" "./tde -p 2 -l x:ls $PROJECT1" "Error: Invalid pane number 'x' for --launch option. Must be between 1 and 2." 1
+run_test "Invalid --panes value '0'" "./tde -p 0 $PROJECT1" "Error: PANES must be between 1 and 9" 1
+run_test "Invalid --panes value '10'" "./tde --panes 10 $PROJECT1" "Error: PANES must be between 1 and 9" 1
+run_test "Invalid --panes value 'abc'" "./tde -p abc $PROJECT1" "Error: PANES must be between 1 and 9" 1
+run_test "Invalid --launch pane number '0'" "./tde -p 2 -l 0:ls $PROJECT1" "Error: Invalid launch option pane number '0'. Must be between 1 and 2" 1
+run_test "Invalid --launch pane number (too high)" "./tde -p 2 -l 3:ls $PROJECT1" "Error: Invalid launch option pane number '3'. Must be between 1 and 2" 1
+run_test "Invalid --launch pane number (non-numeric)" "./tde -p 2 -l x:ls $PROJECT1" "Error: Invalid launch option pane number 'x'. Must be between 1 and 2" 1
 
-run_test "New Session Mode inside tmux" "./tde" "Error: No project directories specified; cannot run New Session Mode inside tmux." 1
-run_test "Current Session Mode outside tmux" "./tde $PROJECT1" "Error: PROJECT_DIR arguments specified but not running inside a tmux session." 1 TMUX=
-run_test "Missing project directory" "./tde /nonexistent/path" "Error: The following project directories do not exist:
-  /nonexistent/path" 1
-run_test "No project directories found in $TEST_TDE_CONF" "./tde" "Error: No project directories found in $TEST_TDE_CONF" 1 "HOME=$TEST_HOME TMUX="
+run_test "New Session Mode inside tmux" "./tde" "Error: No project directories specified; cannot run New Session Mode inside tmux" 1
+run_test "Current Session Mode outside tmux" "./tde $PROJECT1" "Error: Project directory command-line arguments specified but not running inside a tmux session" 1 "TMUX="
+run_test "Missing project directory" "./tde /nonexistent/path" "Error: Project directory does not exist: '/nonexistent/path'" 1
+
+# Tests for .tde file
+run_test "No project directories specified" "./tde" "Error: No project directories specified" 1 "TMUX="
+
+write_conf "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
+--panes 3 --launch nvim --launch 3:lazygit /tmp/test-tde/project2"
+
+run_test ".tde with two project directories and configuration options" "./tde" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux set-option -t tde -g base-index 1
+tmux set-window-option -t tde -g pane-base-index 1
+tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
+tmux select-layout -E -t tde:999.2
+tmux send-keys -t tde:999.1 -l nvim
+tmux send-keys -t tde:999.1 Enter
+tmux send-keys -t tde:999.2 -l git status
+tmux send-keys -t tde:999.2 Enter
+tmux select-pane -t tde:999.1
+tmux new-window -t tde: -c /tmp/test-tde/project2 -n project2
+tmux split-window -h -t tde:999 -c /tmp/test-tde/project2
+tmux split-window -t tde:999.2 -c /tmp/test-tde/project2
+tmux select-layout -E -t tde:999.2
+tmux send-keys -t tde:999.1 -l nvim
+tmux send-keys -t tde:999.1 Enter
+tmux send-keys -t tde:999.3 -l lazygit
+tmux send-keys -t tde:999.3 Enter
+tmux select-pane -t tde:999.1
+tmux select-window -t tde:999
+tmux attach-session -t tde" 0 "TMUX="
 
 exit
