@@ -3,7 +3,12 @@
 set -euo pipefail
 
 SESSION_NAME="tde"
+PANES=1
 LAUNCH_CMDS=()
+
+# Store "project specs" with their own options
+# Each element: "PANES|LAUNCH_CMDS_SEP_BY_;;|DIR"
+PROJECT_SPECS=()
 
 print_help() {
     cat <<'EOF'
@@ -52,7 +57,8 @@ DESCRIPTION
         added to current tmux session.
 
     The optional $HOME/.tde configuration file contains a list of project directories, one per line. Blank
-    lines and lines beginning with a # character are skipped.
+    lines and lines beginning with a # character are skipped. Each line can also contain command-line
+    style options like -p and -l to customize the panes and launch commands for that specific project.
 
     For each project directory:
 
@@ -85,6 +91,46 @@ tmux_cmd() {
 window_name() {
     local dir="$1"
     echo "$(basename "$dir")"
+}
+
+# Function to parse a single project spec (used for both CLI and config file)
+parse_project_spec() {
+    local args=("$@")
+    local panes="$PANES"         # start from global defaults
+    local -a launches=("${LAUNCH_CMDS[@]}") # copy current launches
+    local dir=""
+
+    while [[ ${#args[@]} -gt 0 ]]; do
+        case "${args[0]}" in
+            -p|--panes)
+                panes="${args[1]}"
+                args=("${args[@]:2}")
+                ;;
+            --panes=*)
+                panes="${args[0]#*=}"
+                args=("${args[@]:1}")
+                ;;
+            -l|--launch)
+                launches+=("${args[1]}")
+                args=("${args[@]:2}")
+                ;;
+            -*)
+                echo "Unknown option in spec: ${args[0]}" >&2
+                exit 1
+                ;;
+            *)
+                dir="${args[0]}"
+                args=("${args[@]:1}")
+                ;;
+        esac
+    done
+
+    if [[ -z "$dir" ]]; then
+        echo "Error: Project spec missing directory" >&2
+        exit 1
+    fi
+
+    PROJECT_SPECS+=("${panes}|$(IFS=$'\t'; echo "${launches[*]}")|$dir")
 }
 
 # Get a list of existing window names in a session
@@ -215,8 +261,13 @@ if [[ -n "${TMUX:-}" ]]; then
     INSIDE_TMUX=1
 fi
 
+# Convert PROJECT_DIRS to PROJECT_SPECS
+for dir in "${PROJECT_DIRS[@]}"; do
+    parse_project_spec "$dir"
+done
+
 # Mode detection and error handling
-if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
+if [[ ${#PROJECT_SPECS[@]} -eq 0 ]]; then
     # New Session Mode
     if [[ $INSIDE_TMUX -eq 1 ]]; then
         echo "Error: No project directories specified; cannot run New Session Mode inside tmux." >&2
@@ -233,7 +284,7 @@ if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
     while IFS= read -r line; do
         [[ -z "$line" || "$line" =~ ^# ]] && continue
         expanded_line=$(eval echo "$line") # Expand ~ and $HOME
-        PROJECT_DIRS+=("$expanded_line")
+        parse_project_spec $expanded_line
     done < "$HOME/.tde"
     if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
         echo "Error: No project directories found in $HOME/.tde" >&2
@@ -249,9 +300,10 @@ fi
 
 # Check for missing directories
 MISSING=()
-for DIR in "${PROJECT_DIRS[@]}"; do
-    if [[ ! -d "$DIR" ]]; then
-        MISSING+=("$DIR")
+for SPEC in "${PROJECT_SPECS[@]}"; do
+    IFS="|" read -r _ _ dir <<<"$SPEC"
+    if [[ ! -d "$dir" ]]; then
+        MISSING+=("$dir")
     fi
 done
 
@@ -364,3 +416,4 @@ else
     fi
     tmux_cmd attach-session -t "$SESSION_NAME"
 fi
+

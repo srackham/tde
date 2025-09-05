@@ -381,10 +381,10 @@ run_test "Invalid --launch pane number (0)" "./tde -p 2 -l 0:ls $PROJECT1" "Erro
 run_test "Invalid --launch pane number (too high)" "./tde -p 2 -l 3:ls $PROJECT1" "Error: Invalid pane number '3' for --launch option. Must be between 1 and 2." 1
 run_test "Invalid --launch pane number (non-numeric)" "./tde -p 2 -l x:ls $PROJECT1" "Error: Invalid pane number 'x' for --launch option. Must be between 1 and 2." 1
 
-run_test "New Session Mode inside tmux" "" "Error: No project directories specified; cannot run New Session Mode inside tmux." 1
+run_test "New Session Mode inside tmux" "./tde" "Error: No project directories specified; cannot run New Session Mode inside tmux." 1
 run_test "Current Session Mode outside tmux" "./tde $PROJECT1" "Error: PROJECT_DIR arguments specified but not running inside a tmux session." 1 TMUX=
 run_test "Missing project directory" "./tde /nonexistent/path" "Error: The following project directories do not exist:
   /nonexistent/path" 1
-run_test "No project directories found in $TEST_TDE_CONF" "" "Error: No project directories found in $TEST_TDE_CONF" 1 "HOME=$TEST_HOME TMUX="
+run_test "No project directories found in $TEST_TDE_CONF" "./tde" "Error: No project directories found in $TEST_TDE_CONF" 1 "HOME=$TEST_HOME TMUX="
 
 exit
