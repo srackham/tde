@@ -70,6 +70,7 @@ run_test() {
 
     if $pass; then
         echo "  PASS"
+        TEST_COUNT=$((TEST_COUNT + 1)) 
     else
         exit 1
     fi
@@ -385,4 +386,4 @@ run_test "Missing project directory" "./tde /nonexistent/path" "Error: The follo
 run_test "No project directories found in $TEST_TDE_CONF" "" "Error: No project directories found in $TEST_TDE_CONF" 1 "HOME=$TEST_HOME TMUX="
 
 echo
-echo "All tests passed!"
+echo "$TEST_COUNT tests passed!"
