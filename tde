@@ -311,7 +311,6 @@ fi
 if [[ $INSIDE_TMUX -eq 1 ]]; then
     # Current Session Mode: Add windows to current session
     if [[ -z "$TEST_TDE" ]]; then
-        # TODO: Check does this make sense i.e. can we open in non-tde sessions?
         SESSION_NAME="$(tmux display-message -p '#S')"
     fi
     tmux_cmd set-option -t "$SESSION_NAME" -g base-index 1
