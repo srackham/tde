@@ -17,7 +17,8 @@ setup() {
     touch "$TEST_TDE_CONF"
     PROJECT1="$TEST_DIR/project1"
     PROJECT2="$TEST_DIR/project2"
-    mkdir -p $PROJECT1 $PROJECT2
+    PROJECT3="$TEST_DIR/project3"
+    mkdir -p $PROJECT1 $PROJECT2 $PROJECT3
 }
 setup
 
@@ -397,6 +398,46 @@ run_test "Missing project directory" "./tde /nonexistent/path" "Error: Project d
 # Tests for .tde file
 run_test "No project directories specified" "./tde" "Error: No project directories specified" 1 "TMUX="
 
+write_conf "/tmp/test-tde/project1"
+
+run_test ".tde with single directory-only entry" "./tde" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux set-option -t tde -g base-index 1
+tmux set-window-option -t tde -g pane-base-index 1
+tmux select-pane -t tde:999.1
+tmux select-window -t tde:999
+tmux attach-session -t tde" 0 "TMUX="
+
+run_test "Command-line panes option with directory-only .tde entry" "./tde -p 2" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux set-option -t tde -g base-index 1
+tmux set-window-option -t tde -g pane-base-index 1
+tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
+tmux select-layout -E -t tde:999.2
+tmux select-pane -t tde:999.1
+tmux select-window -t tde:999
+tmux attach-session -t tde" 0 "TMUX="
+
+run_test "Command-line launch option with directory-only .tde entry" "./tde -l nvim" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux set-option -t tde -g base-index 1
+tmux set-window-option -t tde -g pane-base-index 1
+tmux send-keys -t tde:999.1 -l nvim
+tmux send-keys -t tde:999.1 Enter
+tmux select-pane -t tde:999.1
+tmux select-window -t tde:999
+tmux attach-session -t tde" 0 "TMUX="
+
+run_test "Command-line panes and launch options with directory-only .tde entry" "./tde -l nvim -p 2 -l 2:lazygit" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux set-option -t tde -g base-index 1
+tmux set-window-option -t tde -g pane-base-index 1
+tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
+tmux select-layout -E -t tde:999.2
+tmux send-keys -t tde:999.1 -l nvim
+tmux send-keys -t tde:999.1 Enter
+tmux send-keys -t tde:999.2 -l lazygit
+tmux send-keys -t tde:999.2 Enter
+tmux select-pane -t tde:999.1
+tmux select-window -t tde:999
+tmux attach-session -t tde" 0 "TMUX="
+
 write_conf "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
 --panes 3 --launch nvim --launch 3:lazygit /tmp/test-tde/project2"
 
@@ -413,6 +454,38 @@ tmux select-pane -t tde:999.1
 tmux new-window -t tde: -c /tmp/test-tde/project2 -n project2
 tmux split-window -h -t tde:999 -c /tmp/test-tde/project2
 tmux split-window -t tde:999.2 -c /tmp/test-tde/project2
+tmux select-layout -E -t tde:999.2
+tmux send-keys -t tde:999.1 -l nvim
+tmux send-keys -t tde:999.1 Enter
+tmux send-keys -t tde:999.3 -l lazygit
+tmux send-keys -t tde:999.3 Enter
+tmux select-pane -t tde:999.1
+tmux select-window -t tde:999
+tmux attach-session -t tde" 0 "TMUX="
+
+write_conf "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
+/tmp/test-tde/project2
+--panes 3 --launch nvim --launch 3:lazygit /tmp/test-tde/project3"
+
+run_test ".tde with three project directories, one is directory-only" "./tde --panes 4" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux set-option -t tde -g base-index 1
+tmux set-window-option -t tde -g pane-base-index 1
+tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
+tmux select-layout -E -t tde:999.2
+tmux send-keys -t tde:999.1 -l nvim
+tmux send-keys -t tde:999.1 Enter
+tmux send-keys -t tde:999.2 -l git status
+tmux send-keys -t tde:999.2 Enter
+tmux select-pane -t tde:999.1
+tmux new-window -t tde: -c /tmp/test-tde/project2 -n project2
+tmux split-window -h -t tde:999 -c /tmp/test-tde/project2
+tmux split-window -t tde:999.2 -c /tmp/test-tde/project2
+tmux split-window -t tde:999.2 -c /tmp/test-tde/project2
+tmux select-layout -E -t tde:999.2
+tmux select-pane -t tde:999.1
+tmux new-window -t tde: -c /tmp/test-tde/project3 -n project3
+tmux split-window -h -t tde:999 -c /tmp/test-tde/project3
+tmux split-window -t tde:999.2 -c /tmp/test-tde/project3
 tmux select-layout -E -t tde:999.2
 tmux send-keys -t tde:999.1 -l nvim
 tmux send-keys -t tde:999.1 Enter
