@@ -17,7 +17,8 @@ NAME
     tde - open project workspaces
 
 SYNOPSIS
-    New Session Mode: Create 'tde' tmux session and add project workspace windows from the `$HOME/.tde` configuration file:
+    New Session Mode: Create 'tde' tmux session and add project workspace windows from the
+    `$HOME/.tde` configuration file:
 
         tde [OPTION...]
 
@@ -33,16 +34,16 @@ OPTIONS
         print this text.
 
     -l, --launch [PANE:]COMMAND
-        Execute shell COMMAND in pane PANE of each project workspace window. PANE must be between 1 and
-        the value specified by the --panes option. PANE defaults to 1.
+        Execute shell COMMAND in pane PANE of each project workspace window. PANE must be between 1
+        and the value specified by the --panes option. PANE defaults to 1.
 
     -p,--panes=PANES
-        Open window with PANES panes. PANES is 1..9. Pane 1 is positioned on the left hand side of the
-        enclosing window; panes 2..PANES are arranged vertically on the right hand side. This option
-        value defaults 1.
+        Open window with PANES panes. PANES is 1..9. Pane 1 is positioned on the left hand side of
+        the enclosing window; panes 2..PANES are arranged vertically on the right hand side. This
+        option value defaults 1.
 
 DESCRIPTION
-    `tde` is a bash script which opens project directory workspaces in separate tmux windows. The
+    `tde` is a bash script that opens project directory workspaces in separate tmux windows. The
     script has two modes of operation:
 
     New Session Mode:
@@ -53,11 +54,7 @@ DESCRIPTION
 
     Current Session Mode:
 
-        If project directories are specified on the command-line then project workspace windows are
-        added to current tmux session.
-
-    The optional `$HOME/.tde` configuration file contains a list of project directories, one per line. Blank
-    lines and lines beginning with a `#` character are skipped.
+        Project workspace windows are added, one per project directory, to current tmux session.
 
     For each project directory:
 
@@ -72,6 +69,15 @@ DESCRIPTION
        PANES - 2 times.
     7. The left-hand pane (pane 1) is selected.
 
-    Finally the first newly created project window is selected and if `tde` was executed in New Session
-    Mode the `tde` session is attached.
+    Finally the first newly created project window is selected and, if `tde` was executed in New Session
+    Mode, the `tde` session is attached.
+
+CONFIGURATION FILE
+    The New Session Mode `$HOME/.tde` configuration file specifies a set of project workspace
+    windows, one per line, formatted like:
+
+        [OPTION...] PROJECT_DIR
+
+    If only a PROJECT_DIR is specified then the options default to the command-line options.
+    Blank lines and lines beginning with a `#` character are skipped.
 ```
