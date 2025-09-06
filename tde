@@ -3,11 +3,10 @@
 set -euo pipefail
 
 SESSION_NAME="tde"
-PANES=1
-LAUNCH_CMDS=()
+PANES_OPT=1
+LAUNCH_OPTS=()
 
-# Store "project specs" with their own options
-# Each element: "PANES|LAUNCH_CMDS_SEP_BY_;;|DIR"
+# Project workspaces (options and workspace directory)
 PROJECT_SPECS=()
 
 print_help() {
@@ -94,6 +93,9 @@ window_name() {
 }
 
 # Function to parse a single project spec (used for both CLI and config file)
+# Each spec is formatted like: `<panes>|<launches>|<dir>` where `<panes>` is the number of
+# panes, `<launches>` is a tab-separated list of launch option values, `<dir>` is the workspace
+# directory path.
 parse_project_spec() {
     local line="$*"
     local args=()
@@ -101,9 +103,9 @@ parse_project_spec() {
     # Re-parse line into proper words with quotes honored
     eval "args=($line)"
 
-    local panes="$PANES"                    # Default panes
-    local -a launches=("${LAUNCH_CMDS[@]}") # Default launches
-    local dir=""
+    local panes=""
+    local launches=()
+    local dir
 
     while [[ ${#args[@]} -gt 0 ]]; do
         case "${args[0]}" in
@@ -123,6 +125,12 @@ parse_project_spec() {
                 ;;
         esac
     done
+
+    # Directory-only entries are assigned command-line option values.
+    if [ -z "$panes" ] && [ ${#launches[@]} -eq 0 ];  then
+        panes="$PANES_OPT"
+        launches=("${LAUNCH_OPTS[@]}")
+    fi
 
     dir=$(eval echo "$dir") # Expand ~ and $HOME
 
@@ -214,7 +222,7 @@ execute_launch_commands() {
 # Parse options
 DRY_RUN=                # Set by --dry-run option
 TEST_TDE=${TEST_TDE:=}  # Set by test-tde.sh
-PANES=1
+PANES_OPT=1
 PROJECT_DIRS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -223,15 +231,15 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         -p|--panes)
-            PANES="$2"
-            if ! [[ "$PANES" =~ ^[1-9]$ ]]; then
+            PANES_OPT="$2"
+            if ! [[ "$PANES_OPT" =~ ^[1-9]$ ]]; then
                 echo "Error: PANES must be between 1 and 9" >&2
                 exit 1
             fi
             shift 2
             ;;
         -l|--launch)
-            LAUNCH_CMDS+=("$2")
+            LAUNCH_OPTS+=("$2")
             shift 2
             ;;
         --help|-h)
