@@ -31,9 +31,9 @@ OPTIONS
     --help, -h
         print this text.
 
-    -l, --launch [PANE:]COMMAND
+    -l, --launch PANE:COMMAND
         Execute shell COMMAND in pane PANE of each project workspace window. PANE must be between 1
-        and the value specified by the --panes option. PANE defaults to 1.
+        and the value specified by the --panes option.
 
     -p,--panes=PANES
         Open window with PANES panes. PANES is 1..9. Pane 1 is positioned on the left hand side of
@@ -109,7 +109,7 @@ parse_project_spec() {
 
     local panes=""
     local launches=()
-    local dir
+    local dir=""
 
     while [[ ${#args[@]} -gt 0 ]]; do
         case "${args[0]}" in
@@ -183,13 +183,13 @@ validate_project_specs() {
             local pane_num
             local command
 
-            if [[ "$launch" == *:* ]]; then
-                pane_num="${launch%%:*}"
-                command="${launch#*:}"
-            else
-                pane_num="1" # Default to pane 1
-                command="$launch"
+            if [[ "$launch" != *:* ]]; then
+                echo "Error: Invalid launch option '$launch'" >&2
+                exit 1
             fi
+
+            pane_num="${launch%%:*}"
+            command="${launch#*:}"
 
             if ! [[ "$pane_num" =~ ^[1-9]$ ]] || (( pane_num < 1 || pane_num > panes )); then
                 echo "Error: Invalid launch option pane number '$pane_num'. Must be between 1 and $panes" >&2
@@ -277,7 +277,7 @@ validate_project_specs
 if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
     # New Session Mode
     if [[ $INSIDE_TMUX -eq 1 ]]; then
-echo "Error: No project directories specified; cannot run New Session Mode inside tmux" >&2
+        echo "Error: No project directories specified; cannot run New Session Mode inside tmux" >&2
         exit 1
     fi
     if [[ -z "$TEST_TDE" ]]; then

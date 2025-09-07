@@ -114,7 +114,7 @@ tmux send-keys -t tde:999.1 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999"
 
-run_test "Dry-run with 2 panes and implicit pane 1 launch command" "./tde -p 2 -l nvim $PROJECT1" "tmux set-option -t tde -g base-index 1
+run_test "Dry-run with 2 panes and implicit pane 1 launch command" "./tde -p 2 -l 1:nvim $PROJECT1" "tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
 tmux new-window -c $PROJECT1 -n $(basename "$PROJECT1")
 tmux split-window -h -t tde:999 -c $PROJECT1
@@ -390,6 +390,7 @@ run_test "Invalid --panes value 'abc'" "./tde -p abc $PROJECT1" "Error: PANES mu
 run_test "Invalid --launch pane number '0'" "./tde -p 2 -l 0:ls $PROJECT1" "Error: Invalid launch option pane number '0'. Must be between 1 and 2" 1
 run_test "Invalid --launch pane number (too high)" "./tde -p 2 -l 3:ls $PROJECT1" "Error: Invalid launch option pane number '3'. Must be between 1 and 2" 1
 run_test "Invalid --launch pane number (non-numeric)" "./tde -p 2 -l x:ls $PROJECT1" "Error: Invalid launch option pane number 'x'. Must be between 1 and 2" 1
+run_test "Invalid --launch value" "./tde -l bad-launch $PROJECT1" "Error: Invalid launch option 'bad-launch'" 1
 
 run_test "New Session Mode inside tmux" "./tde" "Error: No project directories specified; cannot run New Session Mode inside tmux" 1
 run_test "Current Session Mode outside tmux" "./tde $PROJECT1" "Error: Project directory command-line arguments specified but not running inside a tmux session" 1 "TMUX="
@@ -416,7 +417,7 @@ tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
 tmux attach-session -t tde" 0 "TMUX="
 
-run_test "Command-line launch option with directory-only .tde entry" "./tde -l nvim" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+run_test "Command-line launch option with directory-only .tde entry" "./tde -l 1:nvim" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
 tmux send-keys -t tde:999.1 -l nvim
@@ -425,7 +426,7 @@ tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
 tmux attach-session -t tde" 0 "TMUX="
 
-run_test "Command-line panes and launch options with directory-only .tde entry" "./tde -l nvim -p 2 -l 2:lazygit" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+run_test "Command-line panes and launch options with directory-only .tde entry" "./tde -l 1:nvim -p 2 -l 2:lazygit" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
 tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
@@ -439,7 +440,7 @@ tmux select-window -t tde:999
 tmux attach-session -t tde" 0 "TMUX="
 
 write_conf "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
---panes 3 --launch nvim --launch 3:lazygit /tmp/test-tde/project2"
+--panes 3 --launch 1:nvim --launch 3:lazygit /tmp/test-tde/project2"
 
 run_test ".tde with two project directories and configuration options" "./tde" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde -g base-index 1
@@ -465,7 +466,7 @@ tmux attach-session -t tde" 0 "TMUX="
 
 write_conf "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
 /tmp/test-tde/project2
---panes 3 --launch nvim --launch 3:lazygit /tmp/test-tde/project3"
+--panes 3 --launch 1:nvim --launch 3:lazygit /tmp/test-tde/project3"
 
 run_test ".tde with three project directories, one is directory-only" "./tde --panes 4" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde -g base-index 1
