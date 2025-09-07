@@ -8,11 +8,12 @@ set -euo pipefail
 # Create temporary directories for testing
 TEST_DIR=/tmp/test-tde
 TEST_HOME="$TEST_DIR/home"
-TEST_TDE_CONF="$TEST_HOME/.tde"
+TEST_TDE_CONF="$TEST_HOME/.config/tde/config"
 
 setup() {
     mkdir -p "$TEST_DIR"
     mkdir -p "$TEST_HOME"
+    mkdir -p "$(dirname "$TEST_TDE_CONF")"
     [ -f  "$TEST_TDE_CONF" ] && rm "$TEST_TDE_CONF"
     touch "$TEST_TDE_CONF"
     PROJECT1="$TEST_DIR/project1"
