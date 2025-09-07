@@ -33,6 +33,9 @@ OPTIONS
     --help, -h
         print this text.
 
+    -c, --config CONFIG_FILE
+        Specify the path of the configuration file overriding the default configuration file path.
+
     -l, --launch PANE:COMMAND
         Execute shell COMMAND in pane PANE of each project workspace window. PANE must be between 1
         and the value specified by the --panes option.
