@@ -7,15 +7,13 @@ set -euo pipefail
 
 # Create temporary directories for testing
 TEST_DIR=/tmp/test-tde
-TEST_HOME="$TEST_DIR/home"
-TEST_TDE_CONF="$TEST_HOME/.config/tde/config"
+CONFIG_FILE="$TEST_DIR/.config/tde/tde.conf"
 
 setup() {
     mkdir -p "$TEST_DIR"
-    mkdir -p "$TEST_HOME"
-    mkdir -p "$(dirname "$TEST_TDE_CONF")"
-    [ -f  "$TEST_TDE_CONF" ] && rm "$TEST_TDE_CONF"
-    touch "$TEST_TDE_CONF"
+    mkdir -p "$(dirname "$CONFIG_FILE")"
+    [ -f  "$CONFIG_FILE" ] && rm "$CONFIG_FILE"
+    touch "$CONFIG_FILE"
     PROJECT1="$TEST_DIR/project1"
     PROJECT2="$TEST_DIR/project2"
     PROJECT3="$TEST_DIR/project3"
@@ -33,7 +31,7 @@ run_test() {
     local command="TEST_TDE=true $2"
     local expected_output="$3"
     local expected_exit_code="${4:-0}" # Defaults to 0 if not provided
-    local env_vars="${5:-TMUX=true} HOME=$TEST_HOME"
+    local env_vars="TMUX="$TMUX" TDE_CONFIG_FILE="$CONFIG_FILE""
 
     # Prepend env_vars to command if specified
     if [[ -n "$env_vars" ]]; then
@@ -81,15 +79,20 @@ run_test() {
     fi
 }
 
-# Function to write .tde configuration file.
+# Function to write configuration file.
 write_conf() {
     local content="$1"
     # Overwrite config file
-    printf "%s\n" "$content" > "$TEST_TDE_CONF"
+    printf "%s\n" "$content" > "$CONFIG_FILE"
 }
 
 
 TEST_COUNT=0
+
+#
+# Simulate running in a tmux window
+#
+TMUX=true
 
 run_test "Basic dry-run with a single directory" "./tde $PROJECT1" "tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
@@ -394,40 +397,46 @@ run_test "Invalid --launch pane number (non-numeric)" "./tde -p 2 -l x:ls $PROJE
 run_test "Invalid --launch value" "./tde -l bad-launch $PROJECT1" "Error: Invalid launch option 'bad-launch'" 1
 
 run_test "New Session Mode inside tmux" "./tde" "Error: No project directories specified; cannot run New Session Mode inside tmux" 1
-run_test "Current Session Mode outside tmux" "./tde $PROJECT1" "Error: Project directory command-line arguments specified but not running inside a tmux session" 1 "TMUX="
 run_test "Missing project directory" "./tde /nonexistent/path" "Error: Project directory does not exist: '/nonexistent/path'" 1
 
-# Tests for .tde file
-run_test "No project directories specified" "./tde" "Error: No project directories specified" 1 "TMUX="
+#
+# Simulate not running in a tmux window
+#
+TMUX=""
+
+run_test "Current Session Mode outside tmux" "./tde $PROJECT1" "Error: Project directory command-line arguments specified but not running inside a tmux session" 1
+
+# Tests for configuration file
+run_test "No project directories specified" "./tde" "Error: No project directories specified" 1
 
 write_conf "/tmp/test-tde/project1"
 
-run_test ".tde with single directory-only entry" "./tde" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+run_test "Configuration file with single directory-only entry" "./tde" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
-tmux attach-session -t tde" 0 "TMUX="
+tmux attach-session -t tde" 0
 
-run_test "Command-line panes option with directory-only .tde entry" "./tde -p 2" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+run_test "Command-line panes option with directory-only configuration file entry" "./tde -p 2" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
 tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
 tmux select-layout -E -t tde:999.2
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
-tmux attach-session -t tde" 0 "TMUX="
+tmux attach-session -t tde" 0
 
-run_test "Command-line launch option with directory-only .tde entry" "./tde -l 1:nvim" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+run_test "Command-line launch option with directory-only configuration file entry" "./tde -l 1:nvim" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
 tmux send-keys -t tde:999.1 -l nvim
 tmux send-keys -t tde:999.1 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
-tmux attach-session -t tde" 0 "TMUX="
+tmux attach-session -t tde" 0
 
-run_test "Command-line panes and launch options with directory-only .tde entry" "./tde -l 1:nvim -p 2 -l 2:lazygit" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+run_test "Command-line panes and launch options with directory-only configuration file entry" "./tde -l 1:nvim -p 2 -l 2:lazygit" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
 tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
@@ -438,12 +447,12 @@ tmux send-keys -t tde:999.2 -l lazygit
 tmux send-keys -t tde:999.2 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
-tmux attach-session -t tde" 0 "TMUX="
+tmux attach-session -t tde" 0
 
 write_conf "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
 --panes 3 --launch 1:nvim --launch 3:lazygit /tmp/test-tde/project2"
 
-run_test ".tde with two project directories and configuration options" "./tde" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+run_test "Configuration file with two project directories and configuration options" "./tde" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
 tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
@@ -463,13 +472,13 @@ tmux send-keys -t tde:999.3 -l lazygit
 tmux send-keys -t tde:999.3 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
-tmux attach-session -t tde" 0 "TMUX="
+tmux attach-session -t tde" 0
 
 write_conf "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
 /tmp/test-tde/project2
 --panes 3 --launch 1:nvim --launch 3:lazygit /tmp/test-tde/project3"
 
-run_test ".tde with three project directories, one is directory-only" "./tde --panes 4" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+run_test "Configuration file with three project directories, one is directory-only" "./tde --panes 4" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
 tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
@@ -495,6 +504,6 @@ tmux send-keys -t tde:999.3 -l lazygit
 tmux send-keys -t tde:999.3 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
-tmux attach-session -t tde" 0 "TMUX="
+tmux attach-session -t tde" 0
 
 exit

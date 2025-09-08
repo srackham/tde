@@ -18,7 +18,7 @@ NAME
 
 SYNOPSIS
     New Session Mode: Create 'tde' tmux session and add project workspace windows from the
-    `$HOME/.tde` configuration file:
+    configuration file:
 
         tde [OPTION...]
 
@@ -34,7 +34,8 @@ OPTIONS
         print this text.
 
     -c, --config CONFIG_FILE
-        Specify the path of the configuration file overriding the default configuration file path.
+        Specify the path of the configuration file overriding the default configuration file path
+        and the TDE_CONFIG_FILE environment variable.
 
     -l, --launch PANE:COMMAND
         Execute shell COMMAND in pane PANE of each project workspace window. PANE must be between 1
@@ -53,7 +54,7 @@ DESCRIPTION
 
         If no project directories are specified on the command-line a tmux session named `tde` is
         created and project workspace windows are added from the list of directories read from the
-        `$HOME/.tde` configuration file.
+        configuration file.
 
     Current Session Mode:
 
@@ -76,10 +77,17 @@ DESCRIPTION
     Mode, the `tde` session is attached.
 
 CONFIGURATION FILE
-    The New Session Mode `$HOME/.tde` configuration file specifies a set of project workspace
-    windows, one per line, formatted like:
+    The New Session Mode configuration file specifies a set of project workspace windows, one per
+    line, formatted like:
 
         [OPTION...] PROJECT_DIR
+
+    The default configuration file path follows XDG Base Directory conventions:
+    
+        ${XDG_CONFIG_HOME:-$HOME/.config}/tde/tde.conf
+    
+    The environment variable TDE_CONFIG_FILE can be used to override the default configuration
+    file path.
 
     If only a PROJECT_DIR is specified then the options default to the command-line options.
     Blank lines and lines beginning with a `#` character are skipped.
