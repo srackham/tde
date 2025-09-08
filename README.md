@@ -46,6 +46,11 @@ OPTIONS
         the enclosing window; panes 2..PANES are arranged vertically on the right hand side. This
         option value defaults 1.
 
+    -s, --session SESSION_NAME
+        Specify the tmux session name. The --session option also sets the configuration file name,
+        for example the '--session go-dev' command option would set configuration file name to
+        'go-dev.conf`. The default session name is 'tde'.
+
 DESCRIPTION
     `tde` is a bash script that opens project directory workspaces in separate tmux windows. The
     script has two modes of operation:
@@ -83,9 +88,9 @@ CONFIGURATION FILE
         [OPTION...] PROJECT_DIR
 
     The default configuration file path follows XDG Base Directory conventions:
-    
+
         ${XDG_CONFIG_HOME:-$HOME/.config}/tde/tde.conf
-    
+
     The environment variable TDE_CONFIG_FILE can be used to override the default configuration
     file path.
 

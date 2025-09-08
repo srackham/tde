@@ -7,7 +7,8 @@ set -euo pipefail
 
 # Create temporary directories for testing
 TEST_DIR=/tmp/test-tde
-CONFIG_FILE="$TEST_DIR/.config/tde/tde.conf"
+CONFIG_DIR="$TEST_DIR/.config/tde"
+CONFIG_FILE="$CONFIG_DIR/tde.conf"
 
 setup() {
     mkdir -p "$TEST_DIR"
@@ -505,5 +506,11 @@ tmux send-keys -t tde:999.3 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
 tmux attach-session -t tde" 0
+
+run_test "Bad session name" "./tde -s 'bad#session#name'" "Error: SESSION_NAME must contain only alphanumeric characters, dashes, underscores, or periods: 'bad#session#name'" 1
+
+CONFIG_FILE="$CONFIG_DIR/session-name.conf"
+run_test "Missing session configuration file" "./tde -s 'session-name'" "Warning: Configuration file '/tmp/test-tde/.config/tde/session-name.conf' not found
+Error: No project directories specified" 1
 
 exit
