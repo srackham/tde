@@ -13,7 +13,7 @@ CONFIG_FILE="$CONFIG_DIR/tde.conf"
 setup() {
     mkdir -p "$TEST_DIR"
     mkdir -p "$(dirname "$CONFIG_FILE")"
-    [ -f  "$CONFIG_FILE" ] && rm "$CONFIG_FILE"
+    [ -f "$CONFIG_FILE" ] && rm "$CONFIG_FILE"
     touch "$CONFIG_FILE"
     PROJECT1="$TEST_DIR/project1"
     PROJECT2="$TEST_DIR/project2"
@@ -74,7 +74,7 @@ run_test() {
 
     if $pass; then
         echo "  PASS"
-        TEST_COUNT=$((TEST_COUNT + 1)) 
+        TEST_COUNT=$((TEST_COUNT + 1))
     else
         exit 1
     fi
@@ -84,9 +84,8 @@ run_test() {
 write_conf() {
     local content="$1"
     # Overwrite config file
-    printf "%s\n" "$content" > "$CONFIG_FILE"
+    printf "%s\n" "$content" >"$CONFIG_FILE"
 }
-
 
 TEST_COUNT=0
 

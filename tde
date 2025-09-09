@@ -135,32 +135,37 @@ parse_project_spec() {
 
     while [[ ${#args[@]} -gt 0 ]]; do
         case "${args[0]}" in
-            -p|--panes)
-                panes="${args[1]}"; args=("${args[@]:2}")
-                ;;
-            -l|--launch)
-                launches+=("${args[1]}"); args=("${args[@]:2}")
-                ;;
-            -*)
-                echo "Unknown option in project spec: ${args[0]}" >&2
-                exit 1
-                ;;
-            *)
-                dir="$(eval echo "${args[0]}")"
-                args=("${args[@]:1}")
-                ;;
+        -p | --panes)
+            panes="${args[1]}"
+            args=("${args[@]:2}")
+            ;;
+        -l | --launch)
+            launches+=("${args[1]}")
+            args=("${args[@]:2}")
+            ;;
+        -*)
+            echo "Unknown option in project spec: ${args[0]}" >&2
+            exit 1
+            ;;
+        *)
+            dir="$(eval echo "${args[0]}")"
+            args=("${args[@]:1}")
+            ;;
         esac
     done
 
     # Directory-only entries are assigned command-line option values.
-    if [ -z "$panes" ] && [ ${#launches[@]} -eq 0 ];  then
+    if [ -z "$panes" ] && [ ${#launches[@]} -eq 0 ]; then
         panes="$PANES_OPT"
         launches=("${LAUNCH_OPTS[@]}")
     fi
 
     dir=$(eval echo "$dir") # Expand ~ and $HOME
 
-    PROJECT_SPECS+=("${panes}|$(IFS=$'\t'; echo "${launches[*]}")|$dir")
+    PROJECT_SPECS+=("${panes}|$(
+        IFS=$'\t'
+        echo "${launches[*]}"
+    )|$dir")
 }
 
 # Get a list of existing window names in a session
@@ -189,7 +194,7 @@ validate_project_specs() {
     for spec in "${PROJECT_SPECS[@]}"; do
         IFS="|" read -r panes launch_spec dir <<<"$spec"
 
-        IFS=$'\t' read -ra launches <<< "$launch_spec"
+        IFS=$'\t' read -ra launches <<<"$launch_spec"
         for launch in "${launches[@]}"; do
 
             local pane_num
@@ -203,7 +208,7 @@ validate_project_specs() {
             pane_num="${launch%%:*}"
             command="${launch#*:}"
 
-            if ! [[ "$pane_num" =~ ^[1-9]$ ]] || (( pane_num < 1 || pane_num > panes )); then
+            if ! [[ "$pane_num" =~ ^[1-9]$ ]] || ((pane_num < 1 || pane_num > panes)); then
                 echo "Error: Invalid launch option pane number '$pane_num'. Must be between 1 and $panes" >&2
                 exit 1
             fi
@@ -215,7 +220,7 @@ validate_project_specs() {
         fi
 
         if [[ ! -d "$dir" ]]; then
-          echo "Error: Project directory does not exist: '$dir'" >&2
+            echo "Error: Project directory does not exist: '$dir'" >&2
             exit 1
         fi
 
@@ -229,7 +234,7 @@ execute_launch_commands() {
     local win_index="$2"
     local launch_spec="$3"
 
-    IFS=$'\t' read -ra launches <<< "$launch_spec"
+    IFS=$'\t' read -ra launches <<<"$launch_spec"
     for launch in "${launches[@]}"; do
         local pane_num
         local command
@@ -247,57 +252,56 @@ execute_launch_commands() {
 }
 
 # Parse options
-DRY_RUN=                # Set by --dry-run option
-TEST_TDE=${TEST_TDE:=}  # Set by test-tde.sh
+DRY_RUN=               # Set by --dry-run option
+TEST_TDE=${TEST_TDE:=} # Set by test-tde.sh
 PANES_OPT=1
 CONFIG_FILE="${TDE_CONFIG_FILE:-}"
 SESSION_NAME="tde"
 PROJECT_DIRS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --dry-run|-n)
-            DRY_RUN=true
-            shift
-            ;;
-        -c|--config)
-            CONFIG_FILE="$2"
-            shift 2
-            ;;
-        -p|--panes)
-            PANES_OPT="$2"
-            if ! [[ "$PANES_OPT" =~ ^[1-9]$ ]]; then
-                echo "Error: PANES must be between 1 and 9" >&2
-                exit 1
-            fi
-            shift 2
-            ;;
-        -l|--launch)
-            LAUNCH_OPTS+=("$2")
-            shift 2
-            ;;
-        -s|--session)
-            SESSION_NAME="$2"
-            if ! [[ "$SESSION_NAME" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
-                echo "Error: SESSION_NAME must contain only alphanumeric characters, dashes, underscores, or periods: '$SESSION_NAME'" >&2
-                exit 1
-            fi
-            shift 2
-            ;;
-        --help|-h)
-            print_help
-            exit 0
-            ;;
-        -*)
-            echo "Unknown option: $1" >&2
+    --dry-run | -n)
+        DRY_RUN=true
+        shift
+        ;;
+    -c | --config)
+        CONFIG_FILE="$2"
+        shift 2
+        ;;
+    -p | --panes)
+        PANES_OPT="$2"
+        if ! [[ "$PANES_OPT" =~ ^[1-9]$ ]]; then
+            echo "Error: PANES must be between 1 and 9" >&2
             exit 1
-            ;;
-        *)
-            PROJECT_DIRS+=("$1")
-            shift
-            ;;
+        fi
+        shift 2
+        ;;
+    -l | --launch)
+        LAUNCH_OPTS+=("$2")
+        shift 2
+        ;;
+    -s | --session)
+        SESSION_NAME="$2"
+        if ! [[ "$SESSION_NAME" =~ ^[a-zA-Z0-9_.-]+$ ]]; then
+            echo "Error: SESSION_NAME must contain only alphanumeric characters, dashes, underscores, or periods: '$SESSION_NAME'" >&2
+            exit 1
+        fi
+        shift 2
+        ;;
+    --help | -h)
+        print_help
+        exit 0
+        ;;
+    -*)
+        echo "Unknown option: $1" >&2
+        exit 1
+        ;;
+    *)
+        PROJECT_DIRS+=("$1")
+        shift
+        ;;
     esac
 done
-
 
 INSIDE_TMUX=0
 if [[ -n "${TMUX:-}" ]]; then
@@ -319,10 +323,10 @@ if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
     fi
     if [[ -z "$TEST_TDE" ]]; then
         if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
-              echo "Attaching to existing session '$SESSION_NAME'"
-              tmux_cmd attach-session -t "$SESSION_NAME"
-              exit
-          fi
+            echo "Attaching to existing session '$SESSION_NAME'"
+            tmux_cmd attach-session -t "$SESSION_NAME"
+            exit
+        fi
     fi
     # Read, parse and validate config file
     if [[ -z "$CONFIG_FILE" ]]; then
@@ -332,7 +336,7 @@ if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
         while IFS= read -r line; do
             [[ -z "$line" || "$line" =~ ^# ]] && continue
             parse_project_spec "$line"
-        done < "$CONFIG_FILE"
+        done <"$CONFIG_FILE"
     else
         echo "Warning: Configuration file '$CONFIG_FILE' not found" >&2
     fi
@@ -376,7 +380,7 @@ if [[ $INSIDE_TMUX -eq 1 ]]; then
             tmux_cmd split-window -h -t "$SESSION_NAME:$WIN_INDEX" -c "$dir"
 
             # Create additional panes 3.. in the right side by splitting horizontally
-            for ((p=3; p<=$panes; p++)); do
+            for ((p = 3; p <= $panes; p++)); do
                 tmux_cmd split-window -t "$SESSION_NAME:$WIN_INDEX.2" -c "$dir"
             done
             tmux_cmd select-layout -E -t "$SESSION_NAME:$WIN_INDEX.2"
@@ -405,7 +409,7 @@ else
         tmux_cmd split-window -h -t "$SESSION_NAME:$FIRST_WIN_INDEX" -c "$FIRST_DIR"
 
         # Create additional panes 3.. in the right side by splitting horizontally
-        for ((p=3; p<=$panes; p++)); do
+        for ((p = 3; p <= $panes; p++)); do
             tmux_cmd split-window -t "$SESSION_NAME:$FIRST_WIN_INDEX.2" -c "$FIRST_DIR"
         done
         tmux_cmd select-layout -E -t "$SESSION_NAME:$FIRST_WIN_INDEX.2"
@@ -431,7 +435,7 @@ else
             tmux_cmd split-window -h -t "$SESSION_NAME:$WIN_INDEX" -c "$dir"
 
             # Create additional panes 3.. in the right side by splitting horizontally
-            for ((p=3; p<=$panes; p++)); do
+            for ((p = 3; p <= $panes; p++)); do
                 tmux_cmd split-window -t "$SESSION_NAME:$WIN_INDEX.2" -c "$dir"
             done
             tmux_cmd select-layout -E -t "$SESSION_NAME:$WIN_INDEX.2"
@@ -447,4 +451,3 @@ else
     fi
     tmux_cmd attach-session -t "$SESSION_NAME"
 fi
-
