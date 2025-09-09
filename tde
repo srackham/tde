@@ -356,98 +356,49 @@ if [[ ${#PROJECT_SPECS[@]} -eq 0 ]]; then
     exit 1
 fi
 
-if [[ $INSIDE_TMUX -eq 1 ]]; then
-    # Current Session Mode: Add windows to current session
-    if [[ -z "$TEST_TDE" ]]; then
-        SESSION_NAME="$(tmux display-message -p '#S')"
-    fi
-    tmux_cmd set-option -t "$SESSION_NAME" -g base-index 1
-    tmux_cmd set-window-option -t "$SESSION_NAME" -g pane-base-index 1
-    # Get existing window names in the session
-    EXISTING_WINDOWS="$(existing_windows "$SESSION_NAME")"
-    for spec in "${PROJECT_SPECS[@]}"; do
-        IFS="|" read -r panes launch_spec dir <<<"$spec"
-        WIN_NAME="$(window_name "$dir")"
-        if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
-            echo "Warning: Window '$WIN_NAME' already exists in session '$SESSION_NAME', skipping" >&2
-            continue
-        fi
-        tmux_cmd new-window -c "$dir" -n "$WIN_NAME"
-        WIN_INDEX="$(window_index_by_name "$SESSION_NAME" "$WIN_NAME")"
-
-        if [[ $panes -gt 1 ]]; then
-            # Split vertically to create pane 2
-            tmux_cmd split-window -h -t "$SESSION_NAME:$WIN_INDEX" -c "$dir"
-
-            # Create additional panes 3.. in the right side by splitting horizontally
-            for ((p = 3; p <= panes; p++)); do
-                tmux_cmd split-window -t "$SESSION_NAME:$WIN_INDEX.2" -c "$dir"
-            done
-            tmux_cmd select-layout -E -t "$SESSION_NAME:$WIN_INDEX.2"
-        fi
-
-        execute_launch_commands "$SESSION_NAME" "$WIN_INDEX" "$launch_spec"
-        tmux_cmd select-pane -t "$SESSION_NAME:$WIN_INDEX.1"
-        NEW_WINDOWS+=("$WIN_INDEX")
-        # Update EXISTING_WINDOWS so subsequent checks are accurate
-        EXISTING_WINDOWS+=$'\n'"$WIN_NAME"
-    done
-    if [[ ${#NEW_WINDOWS[@]} -gt 0 ]]; then
-        tmux_cmd select-window -t "$SESSION_NAME:${NEW_WINDOWS[0]}"
-    fi
-else
-    # New Session Mode: Create new session and add windows
-    IFS="|" read -r panes launch_spec FIRST_DIR <<<"${PROJECT_SPECS[0]}"
-    FIRST_WIN_NAME="$(window_name "$FIRST_DIR")"
-    tmux_cmd new-session -d -s "$SESSION_NAME" -c "$FIRST_DIR" -n "$FIRST_WIN_NAME"
-    tmux_cmd set-option -t "$SESSION_NAME" -g base-index 1
-    tmux_cmd set-window-option -t "$SESSION_NAME" -g pane-base-index 1
-    FIRST_WIN_INDEX="$(window_index_by_name "$SESSION_NAME" "$FIRST_WIN_NAME")"
-
-    if [[ $panes -gt 1 ]]; then
-        # Split vertically to create pane 2
-        tmux_cmd split-window -h -t "$SESSION_NAME:$FIRST_WIN_INDEX" -c "$FIRST_DIR"
-
-        # Create additional panes 3.. in the right side by splitting horizontally
-        for ((p = 3; p <= panes; p++)); do
-            tmux_cmd split-window -t "$SESSION_NAME:$FIRST_WIN_INDEX.2" -c "$FIRST_DIR"
-        done
-        tmux_cmd select-layout -E -t "$SESSION_NAME:$FIRST_WIN_INDEX.2"
-    fi
-
-    execute_launch_commands "$SESSION_NAME" "$FIRST_WIN_INDEX" "$launch_spec"
-    tmux_cmd select-pane -t "$SESSION_NAME:$FIRST_WIN_INDEX.1"
-    NEW_WINDOWS+=("$FIRST_WIN_INDEX")
-    # Get existing window names in the session (now includes the first window)
-    EXISTING_WINDOWS="$(existing_windows "$SESSION_NAME")"
-    for spec in "${PROJECT_SPECS[@]:1}"; do
-        IFS="|" read -r panes launch_spec dir <<<"$spec"
-        WIN_NAME="$(window_name "$dir")"
+if [[ -z "$TEST_TDE" ]]; then
+    SESSION_NAME="$(tmux display-message -p '#S')"
+fi
+tmux_cmd set-option -t "$SESSION_NAME" -g base-index 1
+tmux_cmd set-window-option -t "$SESSION_NAME" -g pane-base-index 1
+# Get existing window names in the session
+EXISTING_WINDOWS="$(existing_windows "$SESSION_NAME")"
+for index in "${!PROJECT_SPECS[@]}"; do
+    spec="${PROJECT_SPECS[$index]}"
+    IFS="|" read -r panes launch_spec dir <<<"$spec"
+    WIN_NAME="$(window_name "$dir")"
+    if [[ $INSIDE_TMUX -eq 0 && $index -eq 0 ]]; then
+        tmux_cmd new-session -d -s "$SESSION_NAME" -c "$dir" -n "$WIN_NAME"
+    else
         if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
             echo "Warning: Window '$WIN_NAME' already exists in session '$SESSION_NAME', skipping" >&2
             continue
         fi
         tmux_cmd new-window -t "$SESSION_NAME:" -c "$dir" -n "$WIN_NAME"
-        WIN_INDEX="$(window_index_by_name "$SESSION_NAME" "$WIN_NAME")"
-
-        if [[ $panes -gt 1 ]]; then
-            # Split vertically to create pane 2
-            tmux_cmd split-window -h -t "$SESSION_NAME:$WIN_INDEX" -c "$dir"
-
-            # Create additional panes 3.. in the right side by splitting horizontally
-            for ((p = 3; p <= panes; p++)); do
-                tmux_cmd split-window -t "$SESSION_NAME:$WIN_INDEX.2" -c "$dir"
-            done
-            tmux_cmd select-layout -E -t "$SESSION_NAME:$WIN_INDEX.2"
-        fi
-
-        execute_launch_commands "$SESSION_NAME" "$WIN_INDEX" "$launch_spec"
-        tmux_cmd select-pane -t "$SESSION_NAME:$WIN_INDEX.1"
-        NEW_WINDOWS+=("$WIN_INDEX")
-        EXISTING_WINDOWS+=$'\n'"$WIN_NAME"
-    done
-    if [[ ${#NEW_WINDOWS[@]} -gt 0 ]]; then
-        tmux_cmd select-window -t "$SESSION_NAME:${NEW_WINDOWS[0]}"
     fi
+    WIN_INDEX="$(window_index_by_name "$SESSION_NAME" "$WIN_NAME")"
+
+    if [[ $panes -gt 1 ]]; then
+        # Split vertically to create pane 2
+        tmux_cmd split-window -h -t "$SESSION_NAME:$WIN_INDEX" -c "$dir"
+
+        # Create additional panes 3.. in the right side by splitting horizontally
+        for ((p = 3; p <= panes; p++)); do
+            tmux_cmd split-window -t "$SESSION_NAME:$WIN_INDEX.2" -c "$dir"
+        done
+        tmux_cmd select-layout -E -t "$SESSION_NAME:$WIN_INDEX.2"
+    fi
+
+    execute_launch_commands "$SESSION_NAME" "$WIN_INDEX" "$launch_spec"
+    tmux_cmd select-pane -t "$SESSION_NAME:$WIN_INDEX.1"
+    NEW_WINDOWS+=("$WIN_INDEX")
+    # Update EXISTING_WINDOWS so subsequent checks are accurate
+    EXISTING_WINDOWS+=$'\n'"$WIN_NAME"
+done
+if [[ ${#NEW_WINDOWS[@]} -gt 0 ]]; then
+    tmux_cmd select-window -t "$SESSION_NAME:${NEW_WINDOWS[0]}"
+fi
+if [[ $INSIDE_TMUX -eq 0 ]]; then
+    # TODO: this should be unconditional but need to change tests to accomodate.
     tmux_cmd attach-session -t "$SESSION_NAME"
 fi
