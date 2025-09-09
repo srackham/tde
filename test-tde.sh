@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 trap 'echo; echo "$TEST_COUNT tests passed!"' EXIT
-# trap cleanup EXIT
 
 set -euo pipefail
 
@@ -22,17 +21,13 @@ setup() {
 }
 setup
 
-cleanup() {
-    rm -rf "$TEST_DIR"
-}
-
 # Function to run a test
 run_test() {
     local test_name="$1"
     local command="TEST_TDE=true $2"
     local expected_output="$3"
     local expected_exit_code="${4:-0}" # Defaults to 0 if not provided
-    local env_vars="TMUX="$TMUX" TDE_CONFIG_FILE="$CONFIG_FILE""
+    local env_vars="TMUX=\"$TMUX\" TDE_CONFIG_FILE=\"$CONFIG_FILE\""
 
     # Prepend env_vars to command if specified
     if [[ -n "$env_vars" ]]; then
@@ -46,7 +41,9 @@ run_test() {
     set -e
 
     # Normalize line endings for comparison
+    # shellcheck disable=SC2001
     actual_output=$(echo "$actual_output" | sed 's/\r$//')
+    # shellcheck disable=SC2001
     expected_output=$(echo "$expected_output" | sed 's/\r$//')
 
     local pass=true
@@ -58,8 +55,10 @@ run_test() {
     if [[ "$actual_output" != "$expected_output" ]]; then
         echo "  FAIL (Output mismatch)"
         echo "    Expected Output:"
+        # shellcheck disable=SC2001
         echo "$expected_output" | sed 's/^/      /'
         echo "    Actual Output:"
+        # shellcheck disable=SC2001
         echo "$actual_output" | sed 's/^/      /'
         pass=false
     fi

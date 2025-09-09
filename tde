@@ -115,7 +115,7 @@ tmux_cmd() {
 # Generate window name from directory
 window_name() {
     local dir="$1"
-    echo "$(basename "$dir")"
+    basename "$dir"
 }
 
 # Function to parse a single project spec (used for both CLI and config file)
@@ -380,7 +380,7 @@ if [[ $INSIDE_TMUX -eq 1 ]]; then
             tmux_cmd split-window -h -t "$SESSION_NAME:$WIN_INDEX" -c "$dir"
 
             # Create additional panes 3.. in the right side by splitting horizontally
-            for ((p = 3; p <= $panes; p++)); do
+            for ((p = 3; p <= panes; p++)); do
                 tmux_cmd split-window -t "$SESSION_NAME:$WIN_INDEX.2" -c "$dir"
             done
             tmux_cmd select-layout -E -t "$SESSION_NAME:$WIN_INDEX.2"
@@ -409,7 +409,7 @@ else
         tmux_cmd split-window -h -t "$SESSION_NAME:$FIRST_WIN_INDEX" -c "$FIRST_DIR"
 
         # Create additional panes 3.. in the right side by splitting horizontally
-        for ((p = 3; p <= $panes; p++)); do
+        for ((p = 3; p <= panes; p++)); do
             tmux_cmd split-window -t "$SESSION_NAME:$FIRST_WIN_INDEX.2" -c "$FIRST_DIR"
         done
         tmux_cmd select-layout -E -t "$SESSION_NAME:$FIRST_WIN_INDEX.2"
@@ -435,7 +435,7 @@ else
             tmux_cmd split-window -h -t "$SESSION_NAME:$WIN_INDEX" -c "$dir"
 
             # Create additional panes 3.. in the right side by splitting horizontally
-            for ((p = 3; p <= $panes; p++)); do
+            for ((p = 3; p <= panes; p++)); do
                 tmux_cmd split-window -t "$SESSION_NAME:$WIN_INDEX.2" -c "$dir"
             done
             tmux_cmd select-layout -E -t "$SESSION_NAME:$WIN_INDEX.2"
