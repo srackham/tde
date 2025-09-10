@@ -363,14 +363,26 @@ for index in "${!PROJECT_SPECS[@]}"; do
     spec="${PROJECT_SPECS[$index]}"
     IFS="|" read -r panes launch_spec dir <<<"$spec"
     WIN_NAME="$(window_name "$dir")"
-    if [[ $INSIDE_TMUX -eq 0 && $index -eq 0 ]]; then
-        tmux_cmd new-session -d -s "$SESSION_NAME" -c "$dir" -n "$WIN_NAME"
-    else
-        if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
-            echo "Warning: Window '$WIN_NAME' already exists in session '$SESSION_NAME', skipping" >&2
-            continue
+    if [[ -n "$TEST_TDE" ]]; then
+        if [[ -z "$TMUX" && $index -eq 0 ]]; then
+            tmux_cmd new-session -d -s "$SESSION_NAME" -c "$dir" -n "$WIN_NAME"
+        else
+            if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
+                echo "Warning: Window '$WIN_NAME' already exists in session '$SESSION_NAME', skipping" >&2
+                continue
+            fi
+            tmux_cmd new-window -t "$SESSION_NAME:" -c "$dir" -n "$WIN_NAME"
         fi
-        tmux_cmd new-window -t "$SESSION_NAME:" -c "$dir" -n "$WIN_NAME"
+    else
+        if ! has_session "$SESSION_NAME"; then
+            tmux_cmd new-session -d -s "$SESSION_NAME" -c "$dir" -n "$WIN_NAME"
+        else
+            if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
+                echo "Warning: Window '$WIN_NAME' already exists in session '$SESSION_NAME', skipping" >&2
+                continue
+            fi
+            tmux_cmd new-window -t "$SESSION_NAME:" -c "$dir" -n "$WIN_NAME"
+        fi
     fi
     WIN_INDEX="$(window_index_by_name "$SESSION_NAME" "$WIN_NAME")"
     FIRST_WIN_INDEX="${FIRST_WIN_INDEX:=$WIN_INDEX}"
