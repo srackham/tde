@@ -398,7 +398,4 @@ done
 if [[ ${#NEW_WINDOWS[@]} -gt 0 ]]; then
     tmux_cmd select-window -t "$SESSION_NAME:${NEW_WINDOWS[0]}"
 fi
-if [[ $INSIDE_TMUX -eq 0 ]]; then
-    # TODO: this should be unconditional but need to change tests to accomodate.
-    tmux_cmd attach-session -t "$SESSION_NAME"
-fi
+tmux_cmd attach-session -t "$SESSION_NAME"
