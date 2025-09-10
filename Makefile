@@ -10,6 +10,7 @@ SHELL := bash
 test:
 	shellcheck tde
 	shellcheck test-tde.sh
+	make fmt
 	./test-tde.sh
 
 .PHONY: fmt
