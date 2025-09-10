@@ -303,11 +303,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-INSIDE_TMUX=0
-if [[ -n "${TMUX:-}" ]]; then
-    INSIDE_TMUX=1
-fi
-
 # Convert PROJECT_DIRS to PROJECT_SPECS
 for dir in "${PROJECT_DIRS[@]}"; do
     parse_project_spec "$dir"
@@ -317,7 +312,7 @@ validate_project_specs
 # Mode detection and error handling
 if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
     # New Session Mode
-    if [[ $INSIDE_TMUX -eq 1 ]]; then
+    if [[ -n "$TMUX" ]]; then
         echo "Error: No project directories specified; cannot run New Session Mode inside tmux" >&2
         exit 1
     fi
@@ -343,7 +338,7 @@ if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
     validate_project_specs
 else
     # Current Session Mode
-    if [[ $INSIDE_TMUX -eq 0 ]]; then
+    if [[ -z "$TMUX" ]]; then
         echo "Error: Project directory command-line arguments specified but not running inside a tmux session" >&2
         exit 1
     fi
@@ -354,7 +349,7 @@ if [[ ${#PROJECT_SPECS[@]} -eq 0 ]]; then
     exit 1
 fi
 
-if [[ $INSIDE_TMUX -eq 1 && -z "$TEST_TDE" ]]; then
+if [[ -n "$TMUX" && -z "$TEST_TDE" ]]; then
     SESSION_NAME="$(tmux display-message -p '#S')"  # Set to current session name
 fi
 # Get existing window names in the session
