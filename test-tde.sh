@@ -24,10 +24,10 @@ setup
 # Function to run a test
 run_test() {
     local test_name="$1"
-    local command="TEST_TDE=true $2"
+    local command="TDE_TEST=true $2"
     local expected_output="$3"
     local expected_exit_code="${4:-0}" # Defaults to 0 if not provided
-    local env_vars="TMUX=\"$TMUX\" TDE_CONFIG_FILE=\"$CONFIG_FILE\""
+    local env_vars="TMUX=$TMUX TDE_CONFIG_FILE=\"$CONFIG_FILE\""
 
     # Prepend env_vars to command if specified
     if [[ -n "$env_vars" ]]; then

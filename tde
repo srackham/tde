@@ -98,7 +98,7 @@ EOF
 
 # Print or execute tmux commands
 tmux_cmd() {
-    if [[ -n "$DRY_RUN" || -n "$TEST_TDE" ]]; then
+    if [[ -n "$DRY_RUN" || -n "$TDE_TEST" ]]; then
         echo "tmux $*"
     else
         tmux "$@"
@@ -163,7 +163,7 @@ parse_project_spec() {
 
 # Get a list of existing window names in a session
 existing_windows() {
-    if [[ -n "$TEST_TDE" ]]; then
+    if [[ -n "$TDE_TEST" ]]; then
         echo ""
     else
         local session="$1"
@@ -173,7 +173,7 @@ existing_windows() {
 
 # Get window index by window name in a session
 window_index_by_name() {
-    if [[ -n "$DRY_RUN" || -n "$TEST_TDE" ]]; then
+    if [[ -n "$DRY_RUN" || -n "$TDE_TEST" ]]; then
         echo "999"
     else
         local session="$1"
@@ -248,15 +248,16 @@ has_session() {
     tmux has-session -t "$1" 2>/dev/null || false
 }
 
-# Parse options
-DRY_RUN=               # Set by --dry-run option
-TEST_TDE=${TEST_TDE:=} # Set by test-tde.sh
+# Globals
+DRY_RUN=
 PANES=1
 CONFIG_FILE="${TDE_CONFIG_FILE:-}"
 SESSION_NAME="tde"
 LAUNCH_OPTS=()
 PROJECT_DIRS=()
 PROJECT_SPECS=() # Project workspaces (options and workspace directory)
+TMUX="${TMUX-}"
+TDE_TEST="${TDE_TEST-}"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -316,7 +317,7 @@ if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
         echo "Error: No project directories specified; cannot run New Session Mode inside tmux" >&2
         exit 1
     fi
-    if [[ -z "$TEST_TDE" ]]; then
+    if [[ -z "$TDE_TEST" ]]; then
         if has_session "$SESSION_NAME"; then
             echo "Attaching to existing session '$SESSION_NAME'"
             tmux_cmd attach-session -t "$SESSION_NAME"
@@ -349,8 +350,10 @@ if [[ ${#PROJECT_SPECS[@]} -eq 0 ]]; then
     exit 1
 fi
 
-if [[ -n "$TMUX" && -z "$TEST_TDE" ]]; then
-    SESSION_NAME="$(tmux display-message -p '#S')"  # Set to current session name
+if [[ -z "$TDE_TEST" ]]; then
+    if [[ -n "$TMUX" ]]; then
+        SESSION_NAME="$(tmux display-message -p '#S')" # Set to current session name
+    fi
 fi
 # Get existing window names in the session
 EXISTING_WINDOWS="$(existing_windows "$SESSION_NAME")"
@@ -358,7 +361,7 @@ for index in "${!PROJECT_SPECS[@]}"; do
     spec="${PROJECT_SPECS[$index]}"
     IFS="|" read -r panes launch_spec dir <<<"$spec"
     WIN_NAME="$(window_name "$dir")"
-    if [[ -n "$TEST_TDE" ]]; then
+    if [[ -n "$TDE_TEST" ]]; then
         if [[ -z "$TMUX" && $index -eq 0 ]]; then
             tmux_cmd new-session -d -s "$SESSION_NAME" -c "$dir" -n "$WIN_NAME"
         else
