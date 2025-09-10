@@ -349,8 +349,6 @@ else
     fi
 fi
 
-NEW_WINDOWS=()
-
 if [[ ${#PROJECT_SPECS[@]} -eq 0 ]]; then
     echo "Error: No project directories specified" >&2
     exit 1
@@ -359,22 +357,23 @@ fi
 if [[ $INSIDE_TMUX -eq 1 && -z "$TEST_TDE" ]]; then
     SESSION_NAME="$(tmux display-message -p '#S')"  # Set to current session name
 fi
-if [[ -z "$TEST_TDE" ]]; then
-    tmux has-session -t "$SESSION_NAME" 2>/dev/null || tmux_cmd new-session -d -s "$SESSION_NAME"
-fi
-tmux_cmd set-option -t "$SESSION_NAME" -g base-index 1
-tmux_cmd set-window-option -t "$SESSION_NAME" -g pane-base-index 1
 # Get existing window names in the session
 EXISTING_WINDOWS="$(existing_windows "$SESSION_NAME")"
-for spec in "${PROJECT_SPECS[@]}"; do
+for index in "${!PROJECT_SPECS[@]}"; do
+    spec="${PROJECT_SPECS[$index]}"
     IFS="|" read -r panes launch_spec dir <<<"$spec"
     WIN_NAME="$(window_name "$dir")"
-    if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
-        echo "Warning: Window '$WIN_NAME' already exists in session '$SESSION_NAME', skipping" >&2
-        continue
+    if [[ $INSIDE_TMUX -eq 0 && $index -eq 0 ]]; then
+        tmux_cmd new-session -d -s "$SESSION_NAME" -c "$dir" -n "$WIN_NAME"
+    else
+        if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
+            echo "Warning: Window '$WIN_NAME' already exists in session '$SESSION_NAME', skipping" >&2
+            continue
+        fi
+        tmux_cmd new-window -t "$SESSION_NAME:" -c "$dir" -n "$WIN_NAME"
     fi
-    tmux_cmd new-window -t "$SESSION_NAME:" -c "$dir" -n "$WIN_NAME"
     WIN_INDEX="$(window_index_by_name "$SESSION_NAME" "$WIN_NAME")"
+    FIRST_WIN_INDEX="${FIRST_WIN_INDEX:=$WIN_INDEX}"
 
     if [[ $panes -gt 1 ]]; then
         # Split vertically to create pane 2
@@ -389,11 +388,7 @@ for spec in "${PROJECT_SPECS[@]}"; do
 
     execute_launch_commands "$SESSION_NAME" "$WIN_INDEX" "$launch_spec"
     tmux_cmd select-pane -t "$SESSION_NAME:$WIN_INDEX.1"
-    NEW_WINDOWS+=("$WIN_INDEX")
-    # Update EXISTING_WINDOWS so subsequent checks are accurate
-    EXISTING_WINDOWS+=$'\n'"$WIN_NAME"
+    EXISTING_WINDOWS+=$'\n'"$WIN_NAME" # Update so subsequent checks are accurate
 done
-if [[ ${#NEW_WINDOWS[@]} -gt 0 ]]; then
-    tmux_cmd select-window -t "$SESSION_NAME:${NEW_WINDOWS[0]}"
-fi
+tmux_cmd select-window -t "$SESSION_NAME:$FIRST_WIN_INDEX"
 tmux_cmd attach-session -t "$SESSION_NAME"
