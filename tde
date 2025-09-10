@@ -2,13 +2,6 @@
 
 set -euo pipefail
 
-SESSION_NAME="tde"
-PANES_OPT=1
-LAUNCH_OPTS=()
-
-# Project workspaces (options and workspace directory)
-PROJECT_SPECS=()
-
 print_help() {
     cat <<'EOF'
 NAME
@@ -156,7 +149,7 @@ parse_project_spec() {
 
     # Directory-only entries are assigned command-line option values.
     if [ -z "$panes" ] && [ ${#launches[@]} -eq 0 ]; then
-        panes="$PANES_OPT"
+        panes="$PANES"
         launches=("${LAUNCH_OPTS[@]}")
     fi
 
@@ -251,13 +244,20 @@ execute_launch_commands() {
     done
 }
 
+has_session() {
+    tmux has-session -t "$1" 2>/dev/null || false
+}
+
 # Parse options
 DRY_RUN=               # Set by --dry-run option
 TEST_TDE=${TEST_TDE:=} # Set by test-tde.sh
-PANES_OPT=1
+PANES=1
 CONFIG_FILE="${TDE_CONFIG_FILE:-}"
 SESSION_NAME="tde"
+LAUNCH_OPTS=()
 PROJECT_DIRS=()
+PROJECT_SPECS=() # Project workspaces (options and workspace directory)
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
     --dry-run | -n)
@@ -269,8 +269,8 @@ while [[ $# -gt 0 ]]; do
         shift 2
         ;;
     -p | --panes)
-        PANES_OPT="$2"
-        if ! [[ "$PANES_OPT" =~ ^[1-9]$ ]]; then
+        PANES="$2"
+        if ! [[ "$PANES" =~ ^[1-9]$ ]]; then
             echo "Error: PANES must be between 1 and 9" >&2
             exit 1
         fi
@@ -322,7 +322,7 @@ if [[ ${#PROJECT_DIRS[@]} -eq 0 ]]; then
         exit 1
     fi
     if [[ -z "$TEST_TDE" ]]; then
-        if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+        if has_session "$SESSION_NAME"; then
             echo "Attaching to existing session '$SESSION_NAME'"
             tmux_cmd attach-session -t "$SESSION_NAME"
             exit
@@ -356,26 +356,24 @@ if [[ ${#PROJECT_SPECS[@]} -eq 0 ]]; then
     exit 1
 fi
 
+if [[ $INSIDE_TMUX -eq 1 && -z "$TEST_TDE" ]]; then
+    SESSION_NAME="$(tmux display-message -p '#S')"  # Set to current session name
+fi
 if [[ -z "$TEST_TDE" ]]; then
-    SESSION_NAME="$(tmux display-message -p '#S')"
+    tmux has-session -t "$SESSION_NAME" 2>/dev/null || tmux_cmd new-session -d -s "$SESSION_NAME"
 fi
 tmux_cmd set-option -t "$SESSION_NAME" -g base-index 1
 tmux_cmd set-window-option -t "$SESSION_NAME" -g pane-base-index 1
 # Get existing window names in the session
 EXISTING_WINDOWS="$(existing_windows "$SESSION_NAME")"
-for index in "${!PROJECT_SPECS[@]}"; do
-    spec="${PROJECT_SPECS[$index]}"
+for spec in "${PROJECT_SPECS[@]}"; do
     IFS="|" read -r panes launch_spec dir <<<"$spec"
     WIN_NAME="$(window_name "$dir")"
-    if [[ $INSIDE_TMUX -eq 0 && $index -eq 0 ]]; then
-        tmux_cmd new-session -d -s "$SESSION_NAME" -c "$dir" -n "$WIN_NAME"
-    else
-        if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
-            echo "Warning: Window '$WIN_NAME' already exists in session '$SESSION_NAME', skipping" >&2
-            continue
-        fi
-        tmux_cmd new-window -t "$SESSION_NAME:" -c "$dir" -n "$WIN_NAME"
+    if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
+        echo "Warning: Window '$WIN_NAME' already exists in session '$SESSION_NAME', skipping" >&2
+        continue
     fi
+    tmux_cmd new-window -t "$SESSION_NAME:" -c "$dir" -n "$WIN_NAME"
     WIN_INDEX="$(window_index_by_name "$SESSION_NAME" "$WIN_NAME")"
 
     if [[ $panes -gt 1 ]]; then

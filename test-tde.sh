@@ -431,14 +431,14 @@ write_conf "/tmp/test-tde/project1"
 
 run_test "Configuration file with single directory-only entry" "./tde" "tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
-tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux new-window -t tde: -c /tmp/test-tde/project1 -n project1
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
 tmux attach-session -t tde" 0
 
 run_test "Command-line panes option with directory-only configuration file entry" "./tde -p 2" "tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
-tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux new-window -t tde: -c /tmp/test-tde/project1 -n project1
 tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
 tmux select-layout -E -t tde:999.2
 tmux select-pane -t tde:999.1
@@ -447,7 +447,7 @@ tmux attach-session -t tde" 0
 
 run_test "Command-line launch option with directory-only configuration file entry" "./tde -l 1:nvim" "tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
-tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux new-window -t tde: -c /tmp/test-tde/project1 -n project1
 tmux send-keys -t tde:999.1 -l nvim
 tmux send-keys -t tde:999.1 Enter
 tmux select-pane -t tde:999.1
@@ -456,7 +456,7 @@ tmux attach-session -t tde" 0
 
 run_test "Command-line panes and launch options with directory-only configuration file entry" "./tde -l 1:nvim -p 2 -l 2:lazygit" "tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
-tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux new-window -t tde: -c /tmp/test-tde/project1 -n project1
 tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
 tmux select-layout -E -t tde:999.2
 tmux send-keys -t tde:999.1 -l nvim
@@ -472,7 +472,7 @@ write_conf "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
 
 run_test "Configuration file with two project directories and configuration options" "./tde" "tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
-tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux new-window -t tde: -c /tmp/test-tde/project1 -n project1
 tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
 tmux select-layout -E -t tde:999.2
 tmux send-keys -t tde:999.1 -l nvim
@@ -498,7 +498,7 @@ write_conf "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
 
 run_test "Configuration file with three project directories, one is directory-only" "./tde --panes 4" "tmux set-option -t tde -g base-index 1
 tmux set-window-option -t tde -g pane-base-index 1
-tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux new-window -t tde: -c /tmp/test-tde/project1 -n project1
 tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
 tmux select-layout -E -t tde:999.2
 tmux send-keys -t tde:999.1 -l nvim
