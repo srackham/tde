@@ -27,7 +27,7 @@ run_test() {
     local command="TDE_TEST=true $2"
     local expected_output="$3"
     local expected_exit_code="${4:-0}" # Defaults to 0 if not provided
-    local env_vars="TMUX=$TMUX TDE_CONFIG_FILE=\"$CONFIG_FILE\""
+    local env_vars="TDE_TMUX=$TDE_TMUX TDE_CONFIG_FILE=\"$CONFIG_FILE\""
 
     # Prepend env_vars to command if specified
     if [[ -n "$env_vars" ]]; then
@@ -91,7 +91,7 @@ TEST_COUNT=0
 #
 # Simulate running in a tmux window
 #
-TMUX=true
+TDE_TMUX=true
 
 run_test "Basic dry-run with a single directory" "./tde $PROJECT1" "tmux new-window -t tde: -c $PROJECT1 -n $(basename "$PROJECT1")
 tmux select-pane -t tde:999.1
@@ -382,7 +382,7 @@ run_test "Missing project directory" "./tde /nonexistent/path" "Error: Project d
 #
 # Simulate not running in a tmux window
 #
-TMUX=""
+TDE_TMUX=""
 
 run_test "Current Session Mode outside tmux" "./tde $PROJECT1" "Error: Project directory command-line arguments specified but not running inside a tmux session" 1
 
