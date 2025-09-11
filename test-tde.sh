@@ -24,19 +24,14 @@ setup
 # Function to run a test
 run_test() {
     local test_name="$1"
-    local command="TDE_TEST=true $2"
+    local command="$2"
     local expected_output="$3"
-    local expected_exit_code="${4:-0}" # Defaults to 0 if not provided
-    local env_vars="TDE_TMUX=$TDE_TMUX TDE_CONFIG_FILE=\"$CONFIG_FILE\""
-
-    # Prepend env_vars to command if specified
-    if [[ -n "$env_vars" ]]; then
-        command="$env_vars $command"
-    fi
+    local expected_exit_code="${4:-0}" # Defaults to 0
+    local env_vars="TDE_TEST=true TDE_TEST_SESSION=$TDE_TEST_SESSION TDE_CONFIG_FILE=\"$CONFIG_FILE\""
 
     # Execute the command and capture its output and exit code
     set +e
-    actual_output=$(bash -c "$command 2>&1")
+    actual_output=$(bash -c "$env_vars $command 2>&1")
     actual_exit_code=$?
     set -e
 
@@ -49,7 +44,7 @@ run_test() {
     local pass=true
 
     echo "Running test: $test_name"
-    echo "              $command"
+    echo "              $env_vars $command"
 
     # Check output
     if [[ "$actual_output" != "$expected_output" ]]; then
@@ -89,9 +84,9 @@ write_conf() {
 TEST_COUNT=0
 
 #
-# Simulate running in a tmux window
+# Simulate that a tmux session called 'tde' is running
 #
-TDE_TMUX=true
+TDE_TEST_SESSION=tde
 
 run_test "Basic dry-run with a single directory" "./tde $PROJECT1" "tmux new-window -t tde: -c $PROJECT1 -n $(basename "$PROJECT1")
 tmux select-pane -t tde:999.1
@@ -347,7 +342,7 @@ tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
 tmux attach-session -t tde"
 
-run_test "Illegal command option" "./tde -X $PROJECT1" "Unknown option: -X" 1
+run_test "Illegal command option" "./tde -X $PROJECT1" "tde: unknown option: -X" 1
 
 run_test "Multiple project directories with 2 panes, and a launch command with a complex string" "./tde -p 2 -l '1:echo \"Hello World\!\" && sleep 1' $PROJECT1 $PROJECT2" "tmux new-window -t tde: -c $PROJECT1 -n project1
 tmux split-window -h -t tde:999 -c $PROJECT1
@@ -364,30 +359,28 @@ tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
 tmux attach-session -t tde"
 
-run_test "Tesst Case 21: Help message (first two lines)" "./tde --help | head -n 2" "NAME
+run_test "Help message (first two lines)" "./tde --help | head -n 2" "NAME
     tde - open project workspaces"
+run_test "Just reattach to existing session if no project directory arguments are specified" "./tde" "tmux attach-session -t tde" 0
 
 # Tests for invalid command options
-run_test "Invalid --panes value '0'" "./tde -p 0 $PROJECT1" "Error: PANES must be between 1 and 9" 1
-run_test "Invalid --panes value '10'" "./tde --panes 10 $PROJECT1" "Error: PANES must be between 1 and 9" 1
-run_test "Invalid --panes value 'abc'" "./tde -p abc $PROJECT1" "Error: PANES must be between 1 and 9" 1
-run_test "Invalid --launch pane number '0'" "./tde -p 2 -l 0:ls $PROJECT1" "Error: Invalid launch option pane number '0'. Must be between 1 and 2" 1
-run_test "Invalid --launch pane number (too high)" "./tde -p 2 -l 3:ls $PROJECT1" "Error: Invalid launch option pane number '3'. Must be between 1 and 2" 1
-run_test "Invalid --launch pane number (non-numeric)" "./tde -p 2 -l x:ls $PROJECT1" "Error: Invalid launch option pane number 'x'. Must be between 1 and 2" 1
-run_test "Invalid --launch value" "./tde -l bad-launch $PROJECT1" "Error: Invalid launch option 'bad-launch'" 1
+run_test "Invalid --panes value '0'" "./tde -p 0 $PROJECT1" "tde: PANES must be between 1 and 9" 1
+run_test "Invalid --panes value '10'" "./tde --panes 10 $PROJECT1" "tde: PANES must be between 1 and 9" 1
+run_test "Invalid --panes value 'abc'" "./tde -p abc $PROJECT1" "tde: PANES must be between 1 and 9" 1
+run_test "Invalid --launch pane number '0'" "./tde -p 2 -l 0:ls $PROJECT1" "tde: invalid launch option pane number '0'. Must be between 1 and 2" 1
+run_test "Invalid --launch pane number (too high)" "./tde -p 2 -l 3:ls $PROJECT1" "tde: invalid launch option pane number '3'. Must be between 1 and 2" 1
+run_test "Invalid --launch pane number (non-numeric)" "./tde -p 2 -l x:ls $PROJECT1" "tde: invalid launch option pane number 'x'. Must be between 1 and 2" 1
+run_test "Invalid --launch value" "./tde -l bad-launch $PROJECT1" "tde: invalid launch option 'bad-launch'" 1
 
-run_test "New Session Mode inside tmux" "./tde" "Error: No project directories specified; cannot run New Session Mode inside tmux" 1
-run_test "Missing project directory" "./tde /nonexistent/path" "Error: Project directory does not exist: '/nonexistent/path'" 1
+run_test "Missing project directory" "./tde /nonexistent/path" "tde: project directory not found: '/nonexistent/path'" 1
 
 #
-# Simulate not running in a tmux window
+# Simulate that the tmux session has not been created
 #
-TDE_TMUX=""
-
-run_test "Current Session Mode outside tmux" "./tde $PROJECT1" "Error: Project directory command-line arguments specified but not running inside a tmux session" 1
+TDE_TEST_SESSION=""
 
 # Tests for configuration file
-run_test "No project directories specified" "./tde" "Error: No project directories specified" 1
+run_test "No project directories specified" "./tde" "tde: no project directories specified" 1
 
 write_conf "/tmp/test-tde/project1"
 
@@ -474,10 +467,22 @@ tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
 tmux attach-session -t tde" 0
 
-run_test "Bad session name" "./tde -s 'bad#session#name'" "Error: SESSION_NAME must contain only alphanumeric characters, dashes, underscores, or periods: 'bad#session#name'" 1
+run_test "Bad session name" "./tde -s 'bad#session#name'" "tde: SESSION_NAME must contain only alphanumeric characters, dashes, underscores, or periods: 'bad#session#name'" 1
+
+run_test "Missing configuration file" "./tde --config '$CONFIG_DIR/missing-file.conf'" "tde: configuration file '/tmp/test-tde/.config/tde/missing-file.conf' not found
+tde: no project directories specified" 1
+
+run_test "Missing configuration file" "./tde --config '$CONFIG_DIR/session-name.conf'" "tde: configuration file '/tmp/test-tde/.config/tde/session-name.conf' not found
+tde: no project directories specified" 1
 
 CONFIG_FILE="$CONFIG_DIR/session-name.conf"
-run_test "Missing session configuration file" "./tde -s 'session-name'" "Warning: Configuration file '/tmp/test-tde/.config/tde/session-name.conf' not found
-Error: No project directories specified" 1
+run_test "Missing session configuration file" "./tde -s 'session-name'" "tde: configuration file '/tmp/test-tde/.config/tde/session-name.conf' not found
+tde: no project directories specified" 1
+
+run_test "Missing session configuration file, one project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tde: configuration file '/tmp/test-tde/.config/tde/session-name.conf' not found
+tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
+tmux select-pane -t session-name:999.1
+tmux select-window -t session-name:999
+tmux attach-session -t session-name"
 
 exit
