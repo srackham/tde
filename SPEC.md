@@ -27,6 +27,12 @@ See also:
 - If the session exists then the configuration file is skipped, this allows additional workspace windows to be added with `PROJECT_DIR` options.
 - If `tde` is run without any command-line arguments and the session exists then it will be attached.
 
+if [[ -z "$TMUX" ]]; then
+  tmux attach -t "$session_name"
+else
+  tmux switch-client -t "$session_name"
+fi
+
 Execution pseudo-code:
 
 ```
@@ -35,16 +41,24 @@ if not session_exists:
     append configuration file entries to project specs
 append command-line project directories to project specs
 if #specs == 0:
-    if session_exists:
-        attach session
-        exit
-    else
-        error "no project workspace directories specified"
-        exit 1
+    attach_session session_name
+    exit
 for spec in specs:
     create project workspace window for the spec
 select first new window
-attach session
+attach_session session_name
+
+attach_session():
+    if not session_exists:
+        error "session does not exist: $session_name"
+        exit 1
+    if current_session == session_name: # Do nothing
+        exit
+    if -z $TMUX:
+        attach session_name
+        exit
+    error "executing inside another tmux session: sessions should be nested with care, unset $TMUX to force"
+    exit 1
 ```
 
 ## Coding Guidelines

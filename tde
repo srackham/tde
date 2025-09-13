@@ -123,6 +123,32 @@ session_exists() {
     fi
 }
 
+# Print an empty string if not inside a tmux session or the name of the session.
+current_session() {
+    if [[ -n "$TDE_TEST" ]]; then
+        [ -n "$TMUX" ] && echo "$TDE_TEST_SESSION" || echo ""
+    else
+        [ -n "$TMUX" ] && tmux display-message -p '#S' || echo ""
+    fi
+}
+
+attach_session() {
+    local session_name="$1"
+    if ! session_exists "$session_name"; then
+        write_error_msg "session does not exist: '$session_name'"
+        exit 1
+    fi
+    if [[ $(current_session) == "$session_name" ]]; then # Do nothing
+        return
+    fi
+    if [[ -z $TMUX ]]; then
+        tmux_cmd attach-session -t "$session_name"
+        return
+    fi
+    write_error_msg "executing inside another tmux session: sessions should be nested with care, unset \$TMUX to force"
+    exit 1
+}
+
 # Print or execute tmux commands
 tmux_cmd() {
     if [[ -n "$DRY_RUN" || -n "$TDE_TEST" ]]; then
@@ -249,7 +275,6 @@ validate_project_specs() {
 
 # Execute launch commands in specified panes
 execute_launch_commands() {
-
     local session_name="$1"
     local win_index="$2"
     local launch_spec="$3"
@@ -328,7 +353,7 @@ if ! session_exists "$SESSION_NAME"; then
             parse_project_spec "$line"
         done <"$CONFIG_FILE"
     else
-        write_error_msg "configuration file '$CONFIG_FILE' not found"
+        write_error_msg "warning: configuration file '$CONFIG_FILE' not found"
     fi
 fi
 
@@ -339,15 +364,9 @@ done
 
 validate_project_specs
 
-# Append command-line project directories to project specs
 if [[ ${#PROJECT_SPECS[@]} -eq 0 ]]; then
-    if session_exists "$SESSION_NAME"; then
-        tmux_cmd attach-session -t "$SESSION_NAME"
-        exit
-    else
-        write_error_msg "no project directories specified"
-        exit 1
-    fi
+    attach_session "$SESSION_NAME"
+    exit
 fi
 
 EXISTING_WINDOWS="$(existing_windows "$SESSION_NAME")"
@@ -389,4 +408,4 @@ for index in "${!PROJECT_SPECS[@]}"; do
 done
 
 tmux_cmd select-window -t "$SESSION_NAME:$FIRST_WIN_INDEX"
-tmux_cmd attach-session -t "$SESSION_NAME"
+attach_session "$SESSION_NAME"
