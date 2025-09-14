@@ -26,8 +26,7 @@ OPTIONS
         print this text.
 
     -c, --config CONFIG_FILE
-        Specify the path of the configuration file overriding the default
-        configuration file path and the TDE_CONFIG_FILE environment variable.
+        Specify the path of the configuration file.
 
     -l, --launch PANE:COMMAND
         Execute shell COMMAND in pane PANE of each project workspace window.
@@ -87,24 +86,24 @@ CONFIGURATION FILE
 
         ${XDG_CONFIG_HOME:-$HOME/.config}/tde/tde.conf
 
-    The environment variable TDE_CONFIG_FILE can be used to override the default
-    configuration file path.
-
     If only a PROJECT_DIR is specified then the options default to the
     command-line options. Blank lines and lines beginning with a `#` character
     are skipped.
 EOF
 }
 
+# Environment variables
+TMUX="${TMUX-}"
+
 # Environment variables used for testing
-TDE_TEST="${TDE_TEST-}"
-TDE_TEST_SESSION="${TDE_TEST_SESSION-}"
-TDE_CONFIG_FILE="${TDE_CONFIG_FILE-}"
+TDE_TEST="${TDE_TEST-false}"
+TDE_SESSION_EXISTS="${TDE_SESSION_EXISTS-false}"
+TDE_CONFIG_DIR="${TDE_CONFIG_DIR-}"
 
 # Globals
 DRY_RUN=
 PANES=1
-CONFIG_FILE="$TDE_CONFIG_FILE"
+CONFIG_FILE=
 SESSION_NAME="tde"
 LAUNCH_OPTS=()
 PROJECT_DIRS=()
@@ -116,17 +115,17 @@ write_error_msg() {
 
 session_exists() {
     local session_name="$1"
-    if [[ -n "$TDE_TEST" ]]; then
-        [[ "$TDE_TEST_SESSION" == "$session_name" ]]
+    if [[ $TDE_TEST == true ]]; then
+        [[ "$TDE_SESSION_EXISTS" == true ]]
     else
         tmux has-session -t "$session_name" 2>/dev/null
     fi
 }
 
-# Print an empty string if not inside a tmux session or the name of the session.
+# Print the name of the tmux session in the terminal or an empty string if not inside a tmux session.
 current_session() {
-    if [[ -n "$TDE_TEST" ]]; then
-        [ -n "$TMUX" ] && echo "$TDE_TEST_SESSION" || echo ""
+    if [[ $TDE_TEST == true ]]; then
+        echo "$TMUX"
     else
         [ -n "$TMUX" ] && tmux display-message -p '#S' || echo ""
     fi
@@ -145,13 +144,12 @@ attach_session() {
         tmux_cmd attach-session -t "$session_name"
         return
     fi
-    write_error_msg "executing inside another tmux session: sessions should be nested with care, unset \$TMUX to force"
-    exit 1
+    write_error_msg "warning: refusing to attach nested tmux session '$session_name' inside tmux session '$(current_session)'"
 }
 
 # Print or execute tmux commands
 tmux_cmd() {
-    if [[ -n "$DRY_RUN" || -n "$TDE_TEST" ]]; then
+    if [[ -n "$DRY_RUN" || $TDE_TEST == true ]]; then
         echo "tmux $*"
     else
         tmux "$@"
@@ -216,7 +214,7 @@ parse_project_spec() {
 
 # Get a list of existing window names in a session
 existing_windows() {
-    if [[ -n "$TDE_TEST" ]]; then
+    if [[ $TDE_TEST == true ]]; then
         echo ""
     else
         local session="$1"
@@ -226,7 +224,7 @@ existing_windows() {
 
 # Get window index by window name in a session
 window_index_by_name() {
-    if [[ -n "$DRY_RUN" || -n "$TDE_TEST" ]]; then
+    if [[ -n "$DRY_RUN" || $TDE_TEST == true ]]; then
         echo "999"
     else
         local session="$1"
@@ -342,11 +340,17 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [[ -z "$CONFIG_FILE" ]]; then
+    if [[ $TDE_TEST == true ]]; then
+        config_dir="${TDE_CONFIG_DIR}"
+    else
+        config_dir="${XDG_CONFIG_HOME:-$HOME/.config/tde}"
+    fi
+    CONFIG_FILE="$config_dir/${SESSION_NAME}.conf"
+fi
+
 if ! session_exists "$SESSION_NAME"; then
     # Read, parse and validate config file and append to PROJECT_SPECS
-    if [[ -z "$CONFIG_FILE" ]]; then
-        CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config/tde}/${SESSION_NAME}.conf"
-    fi
     if [[ -f "$CONFIG_FILE" ]]; then
         while IFS= read -r line; do
             [[ -z "$line" || "$line" =~ ^# ]] && continue
@@ -378,12 +382,12 @@ for index in "${!PROJECT_SPECS[@]}"; do
     WIN_NAME="$(window_name "$dir")"
     if ! session_exists "$SESSION_NAME"; then
         tmux_cmd new-session -d -s "$SESSION_NAME" -c "$dir" -n "$WIN_NAME"
-        if [[ -n "$TDE_TEST" ]]; then
-            TDE_TEST_SESSION="$SESSION_NAME" # So the session is not created again
+        if [[ $TDE_TEST == true ]]; then
+            TDE_SESSION_EXISTS=true # So the session is not created again
         fi
     else
         if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
-            write_error_msg "window '$WIN_NAME' already exists in session '$SESSION_NAME', skipping"
+            write_error_msg "duplicate project workspace name: '$WIN_NAME' exists in session '$SESSION_NAME', skipping"
             continue
         fi
         tmux_cmd new-window -t "$SESSION_NAME:" -c "$dir" -n "$WIN_NAME"

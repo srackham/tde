@@ -6,15 +6,17 @@ set -euo pipefail
 
 # Create temporary directories for testing
 TEST_DIR=/tmp/test-tde
-CONFIG_DIR="$TEST_DIR/.config/tde"
-CONFIG_FILE="$CONFIG_DIR/tde.conf"
-TMUX=true
+TDE_CONFIG_DIR="$TEST_DIR/.config/tde"
+
+# For testing purposes the TMUX environment variable is the name of the client session,
+# i.e the name of the session in the executing terminal, or empty if not inside a tmux session.
+TMUX=tde
 
 setup() {
-    mkdir -p "$TEST_DIR"
-    mkdir -p "$(dirname "$CONFIG_FILE")"
-    [ -f "$CONFIG_FILE" ] && rm "$CONFIG_FILE"
-    touch "$CONFIG_FILE"
+    mkdir -p "${TEST_DIR:?}"
+    mkdir -p "${TDE_CONFIG_DIR:?}"
+    rm -rf "${TDE_CONFIG_DIR:?}"/*
+    touch "${TDE_CONFIG_DIR:?}"/tde.conf # Default configuration file
     PROJECT1="$TEST_DIR/project1"
     PROJECT2="$TEST_DIR/project2"
     PROJECT3="$TEST_DIR/project3"
@@ -28,7 +30,7 @@ run_test() {
     local command="$2"
     local expected_output="$3"
     local expected_exit_code="${4:-0}" # Defaults to 0
-    local env_vars="TDE_TEST=true TDE_TEST_SESSION=$TDE_TEST_SESSION TDE_CONFIG_FILE=\"$CONFIG_FILE\" TMUX=$TMUX"
+    local env_vars="TDE_TEST=true TDE_SESSION_EXISTS=${TDE_SESSION_EXISTS:?} TMUX=$TMUX TDE_CONFIG_DIR=\"${TDE_CONFIG_DIR:?}\""
 
     # Execute the command and capture its output and exit code
     set +e
@@ -77,25 +79,24 @@ run_test() {
 
 # Function to write configuration file.
 write_conf() {
-    local content="$1"
+    local session="$1"
+    local content="$2"
+    local config_file="${TDE_CONFIG_DIR:?}"/$session.conf
     # Overwrite config file
-    printf "%s\n" "$content" >"$CONFIG_FILE"
+    printf "%s\n" "$content" >"$config_file"
 }
 
 TEST_COUNT=0
 
-#
-# Simulate that a tmux session called 'tde' is running
-#
-TDE_TEST_SESSION=tde
+TDE_SESSION_EXISTS=true
 
-TMUX=
+TMUX= # Not inside a tmux session
 run_test "Single directory from outside tmux" "./tde $PROJECT1" "tmux new-window -t tde: -c $PROJECT1 -n $(basename "$PROJECT1")
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
 tmux attach-session -t tde"
 
-TMUX=true
+TMUX=tde # Inside a tmux session called 'tde'
 run_test "Single directory from inside tmux" "./tde $PROJECT1" "tmux new-window -t tde: -c $PROJECT1 -n $(basename "$PROJECT1")
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999"
@@ -360,22 +361,27 @@ run_test "Invalid --launch pane number '0'" "./tde -p 2 -l 0:ls $PROJECT1" "tde:
 run_test "Invalid --launch pane number (too high)" "./tde -p 2 -l 3:ls $PROJECT1" "tde: invalid launch option pane number '3'. Must be between 1 and 2" 1
 run_test "Invalid --launch pane number (non-numeric)" "./tde -p 2 -l x:ls $PROJECT1" "tde: invalid launch option pane number 'x'. Must be between 1 and 2" 1
 run_test "Invalid --launch value" "./tde -l bad-launch $PROJECT1" "tde: invalid launch option 'bad-launch'" 1
-
 run_test "Missing project directory" "./tde /nonexistent/path" "tde: project directory not found: '/nonexistent/path'" 1
 
-#
-# Simulate that the tmux session has not been created
-#
-TDE_TEST_SESSION=""
+run_test "Duplicate project directories arguments" "./tde '$PROJECT1' '$PROJECT1'" "tmux new-window -t tde: -c /tmp/test-tde/project1 -n project1
+tmux select-pane -t tde:999.1
+tde: duplicate project workspace name: 'project1' exists in session 'tde', skipping
+tmux select-window -t tde:999"
+
+TDE_SESSION_EXISTS=false
 
 # Tests for configuration file
 run_test "No project directories specified" "./tde" "tde: session does not exist: 'tde'" 1
 
-write_conf "/tmp/test-tde/project1"
-
+write_conf tde "/tmp/test-tde/project1"
 run_test "Configuration file with single directory-only entry" "./tde" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999" 0
+
+run_test "Duplicate project workspace name" "./tde '$PROJECT1'" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux select-pane -t tde:999.1
+tde: duplicate project workspace name: 'project1' exists in session 'tde', skipping
+tmux select-window -t tde:999"
 
 run_test "Command-line panes option with directory-only configuration file entry" "./tde -p 2" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
@@ -399,7 +405,7 @@ tmux send-keys -t tde:999.2 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999" 0
 
-write_conf "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
+write_conf tde "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
 --panes 3 --launch 1:nvim --launch 3:lazygit /tmp/test-tde/project2"
 
 run_test "Configuration file with two project directories and configuration options" "./tde" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
@@ -421,7 +427,7 @@ tmux send-keys -t tde:999.3 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999" 0
 
-write_conf "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
+write_conf tde "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
 /tmp/test-tde/project2
 --panes 3 --launch 1:nvim --launch 3:lazygit /tmp/test-tde/project3"
 
@@ -452,19 +458,24 @@ tmux select-window -t tde:999" 0
 
 run_test "Bad session name" "./tde -s 'bad#session#name'" "tde: SESSION_NAME must contain only alphanumeric characters, dashes, underscores, or periods: 'bad#session#name'" 1
 
-run_test "Missing configuration file" "./tde --config '$CONFIG_DIR/missing-file.conf'" "tde: warning: configuration file '/tmp/test-tde/.config/tde/missing-file.conf' not found
+run_test "Missing configuration file" "./tde --config '$TDE_CONFIG_DIR/missing-file.conf'" "tde: warning: configuration file '/tmp/test-tde/.config/tde/missing-file.conf' not found
 tde: session does not exist: 'tde'" 1
 
-run_test "Missing configuration file" "./tde --config '$CONFIG_DIR/session-name.conf'" "tde: warning: configuration file '/tmp/test-tde/.config/tde/session-name.conf' not found
-tde: session does not exist: 'tde'" 1
-
-CONFIG_FILE="$CONFIG_DIR/session-name.conf"
 run_test "Missing session configuration file" "./tde -s 'session-name'" "tde: warning: configuration file '/tmp/test-tde/.config/tde/session-name.conf' not found
 tde: session does not exist: 'session-name'" 1
 
-run_test "Missing session configuration file, one project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tde: warning: configuration file '/tmp/test-tde/.config/tde/session-name.conf' not found
+TMUX=another-session
+run_test "Missing session configuration file warning, one project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tde: warning: configuration file '/tmp/test-tde/.config/tde/session-name.conf' not found
 tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
 tmux select-pane -t session-name:999.1
-tmux select-window -t session-name:999"
+tmux select-window -t session-name:999
+tde: warning: refusing to attach nested tmux session 'session-name' inside tmux session 'another-session'"
+
+write_conf session-name "/tmp/test-tde/project1"
+TMUX=another-session
+run_test "Single-entry configuration file; nested session warning" "./tde -s 'session-name'" "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
+tmux select-pane -t session-name:999.1
+tmux select-window -t session-name:999
+tde: warning: refusing to attach nested tmux session 'session-name' inside tmux session 'another-session'"
 
 exit
