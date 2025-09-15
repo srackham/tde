@@ -5,7 +5,7 @@ A simple tmux-based text IDE.
 ## Installation
 
 ```
-curl -L -o mknotes https://raw.githubusercontent.com/srackham/tde/main/tde
+curl -L -o tde https://raw.githubusercontent.com/srackham/tde/main/tde
 chmod +x tde
 ./tde --help
 ```
