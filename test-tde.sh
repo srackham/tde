@@ -350,7 +350,7 @@ tmux select-pane -t tde:999.1
 tmux select-window -t tde:999"
 
 run_test "Help message (first two lines)" "./tde --help | head -n 2" "NAME
-    tde - open project workspaces"
+    tde - open project workspaces with tmux"
 run_test "Just reattach to existing session if no project directory arguments are specified" "./tde" "" 0
 
 # Tests for invalid command options

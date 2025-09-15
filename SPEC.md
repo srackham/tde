@@ -38,15 +38,16 @@ Execution pseudo-code:
 ```
 parse command arguments
 if not session_exists:
-    append configuration file entries to project specs
-append command-line project directories to project specs
-if #specs == 0:
+    append configuration file entries to workspace definitions
+append command-line project directories to workspace definitions
+if no workspace definitions:
     attach_session session_name
     exit
-for spec in specs:
-    create project workspace window for the spec
-select first new window
+for definition in workspace definitions:
+    create workspace window for the definition
+select first new workspace
 attach_session session_name
+```
 
 attach_session():
     if not session_exists:
@@ -59,7 +60,6 @@ attach_session():
         exit
     error "executing inside another tmux session: sessions should be nested with care, unset $TMUX to force"
     exit 1
-```
 
 ## Coding Guidelines
 
