@@ -377,6 +377,7 @@ fi
 EXISTING_WINDOWS="$(existing_windows "$SESSION_NAME")"
 
 # Create project workspace windows
+FIRST_WIN_INDEX=""
 for index in "${!PROJECT_DEFS[@]}"; do
     def="${PROJECT_DEFS[$index]}"
     IFS="|" read -r panes launch_def dir <<<"$def"
@@ -412,5 +413,7 @@ for index in "${!PROJECT_DEFS[@]}"; do
     EXISTING_WINDOWS+=$'\n'"$WIN_NAME" # Update so subsequent checks are accurate
 done
 
-tmux_cmd select-window -t "$SESSION_NAME:$FIRST_WIN_INDEX"
+if [[ -n "$FIRST_WIN_INDEX" ]]; then
+    tmux_cmd select-window -t "$SESSION_NAME:$FIRST_WIN_INDEX"
+fi
 attach_session "$SESSION_NAME"
