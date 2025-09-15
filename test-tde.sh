@@ -458,14 +458,14 @@ tmux select-window -t tde:999" 0
 
 run_test "Bad session name" "./tde -s 'bad#session#name'" "tde: SESSION_NAME must contain only alphanumeric characters, dashes, underscores, or periods: 'bad#session#name'" 1
 
-run_test "Missing configuration file" "./tde --config '$TDE_CONFIG_DIR/missing-file.conf'" "tde: warning: configuration file '/tmp/test-tde/.config/tde/missing-file.conf' not found
+run_test "--config option: missing configuration file" "./tde --config '$TDE_CONFIG_DIR/missing-file.conf'" "tde: warning: configuration file '/tmp/test-tde/.config/tde/missing-file.conf' not found
 tde: session does not exist: 'tde'" 1
 
-run_test "Missing session configuration file" "./tde -s 'session-name'" "tde: warning: configuration file '/tmp/test-tde/.config/tde/session-name.conf' not found
+run_test "--sesion option: missing configuration file warning" "./tde -s 'session-name'" "tde: warning: configuration file '/tmp/test-tde/.config/tde/session-name.conf' not found
 tde: session does not exist: 'session-name'" 1
 
 TMUX=another-session
-run_test "Missing session configuration file warning, one project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tde: warning: configuration file '/tmp/test-tde/.config/tde/session-name.conf' not found
+run_test "Missing session configuration file warning; one project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tde: warning: configuration file '/tmp/test-tde/.config/tde/session-name.conf' not found
 tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
 tmux select-pane -t session-name:999.1
 tmux select-window -t session-name:999
