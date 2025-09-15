@@ -107,7 +107,7 @@ CONFIG_FILE=
 SESSION_NAME="tde"
 LAUNCH_OPTS=()
 PROJECT_DIRS=()
-PROJECT_SPECS=() # Project workspaces (options and workspace directory)
+PROJECT_DEFS=() # Project workspaces (options and workspace directory)
 
 write_error_msg() {
     echo "$(basename "$0"): $1" >&2
@@ -162,11 +162,11 @@ window_name() {
     basename "$dir"
 }
 
-# Function to parse a single project spec (used for both CLI and config file)
-# Each spec is formatted like: `<panes>|<launches>|<dir>` where `<panes>` is the number of
+# Function to parse a single project definition (used for both CLI and config file)
+# Each definition is formatted like: `<panes>|<launches>|<dir>` where `<panes>` is the number of
 # panes, `<launches>` is a tab-separated list of launch option values, `<dir>` is the workspace
 # directory path.
-parse_project_spec() {
+parse_project_def() {
     local line="$*"
     local args=()
 
@@ -188,7 +188,7 @@ parse_project_spec() {
             args=("${args[@]:2}")
             ;;
         -*)
-            write_error_msg "unknown option in project spec: ${args[0]}"
+            write_error_msg "unknown option in project definition: ${args[0]}"
             exit 1
             ;;
         *)
@@ -206,7 +206,7 @@ parse_project_spec() {
 
     dir=$(eval echo "$dir") # Expand ~ and $HOME
 
-    PROJECT_SPECS+=("${panes}|$(
+    PROJECT_DEFS+=("${panes}|$(
         IFS=$'\t'
         echo "${launches[*]}"
     )|$dir")
@@ -233,12 +233,12 @@ window_index_by_name() {
     fi
 }
 
-# Validate PROJECT_SPECS array of command arguments
-validate_project_specs() {
-    for spec in "${PROJECT_SPECS[@]}"; do
-        IFS="|" read -r panes launch_spec dir <<<"$spec"
+# Validate PROJECT_DEFS array of command arguments
+validate_project_defs() {
+    for def in "${PROJECT_DEFS[@]}"; do
+        IFS="|" read -r panes launch_def dir <<<"$def"
 
-        IFS=$'\t' read -ra launches <<<"$launch_spec"
+        IFS=$'\t' read -ra launches <<<"$launch_def"
         for launch in "${launches[@]}"; do
 
             local pane_num
@@ -275,9 +275,9 @@ validate_project_specs() {
 execute_launch_commands() {
     local session_name="$1"
     local win_index="$2"
-    local launch_spec="$3"
+    local launch_def="$3"
 
-    IFS=$'\t' read -ra launches <<<"$launch_spec"
+    IFS=$'\t' read -ra launches <<<"$launch_def"
     for launch in "${launches[@]}"; do
         local pane_num
         local command
@@ -350,25 +350,25 @@ if [[ -z "$CONFIG_FILE" ]]; then
 fi
 
 if ! session_exists "$SESSION_NAME"; then
-    # Read, parse and validate config file and append to PROJECT_SPECS
+    # Read, parse and validate config file and append to PROJECT_DEFS
     if [[ -f "$CONFIG_FILE" ]]; then
         while IFS= read -r line; do
             [[ -z "$line" || "$line" =~ ^# ]] && continue
-            parse_project_spec "$line"
+            parse_project_def "$line"
         done <"$CONFIG_FILE"
     else
         write_error_msg "warning: configuration file '$CONFIG_FILE' not found"
     fi
 fi
 
-# Append command-line PROJECT_DIRS to PROJECT_SPECS
+# Append command-line PROJECT_DIRS to PROJECT_DEFS
 for dir in "${PROJECT_DIRS[@]}"; do
-    parse_project_spec "$dir"
+    parse_project_def "$dir"
 done
 
-validate_project_specs
+validate_project_defs
 
-if [[ ${#PROJECT_SPECS[@]} -eq 0 ]]; then
+if [[ ${#PROJECT_DEFS[@]} -eq 0 ]]; then
     attach_session "$SESSION_NAME"
     exit
 fi
@@ -376,9 +376,9 @@ fi
 EXISTING_WINDOWS="$(existing_windows "$SESSION_NAME")"
 
 # Create project workspace windows
-for index in "${!PROJECT_SPECS[@]}"; do
-    spec="${PROJECT_SPECS[$index]}"
-    IFS="|" read -r panes launch_spec dir <<<"$spec"
+for index in "${!PROJECT_DEFS[@]}"; do
+    def="${PROJECT_DEFS[$index]}"
+    IFS="|" read -r panes launch_def dir <<<"$def"
     WIN_NAME="$(window_name "$dir")"
     if ! session_exists "$SESSION_NAME"; then
         tmux_cmd new-session -d -s "$SESSION_NAME" -c "$dir" -n "$WIN_NAME"
@@ -406,7 +406,7 @@ for index in "${!PROJECT_SPECS[@]}"; do
         tmux_cmd select-layout -E -t "$SESSION_NAME:$WIN_INDEX.2"
     fi
 
-    execute_launch_commands "$SESSION_NAME" "$WIN_INDEX" "$launch_spec"
+    execute_launch_commands "$SESSION_NAME" "$WIN_INDEX" "$launch_def"
     tmux_cmd select-pane -t "$SESSION_NAME:$WIN_INDEX.1"
     EXISTING_WINDOWS+=$'\n'"$WIN_NAME" # Update so subsequent checks are accurate
 done
