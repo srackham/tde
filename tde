@@ -386,6 +386,7 @@ for index in "${!PROJECT_DEFS[@]}"; do
         tmux_cmd new-window -t "$SESSION_NAME:" -c "$dir" -n "$WIN_NAME"
     fi
     WIN_INDEX="$(window_index_by_name "$SESSION_NAME" "$WIN_NAME")"
+    tmux_cmd set-option -t "$SESSION_NAME:$WIN_INDEX" pane-base-index 1
     FIRST_WIN_INDEX="${FIRST_WIN_INDEX:=$WIN_INDEX}"
 
     if [[ $panes -gt 1 ]]; then
