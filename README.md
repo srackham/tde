@@ -45,10 +45,10 @@ DESCRIPTION
     is attached.
 
 OPTIONS
-    --dry-run, -n
+     -n, --dry-run
         Print tmux commands without doing anything.
 
-    --help, -h
+    -h, --help
         Print this text.
 
     -c, --config CONFIG_FILE
@@ -69,6 +69,9 @@ OPTIONS
         configuration file name, for example the '--session go-dev' command
         option would set configuration file name to 'go-dev.conf`. The default
         session name is 'tde'.
+
+    -v, --verbose
+        Print tmux commands.
 
 CONFIGURATION FILES
     The New Session Mode configuration file specifies a set of project workspace
