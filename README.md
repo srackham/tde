@@ -46,7 +46,8 @@ DESCRIPTION
 
 OPTIONS
      -n, --dry-run
-        Print tmux commands without doing anything.
+        Print tmux commands without doing anything. '999' is a dummy value for
+        tmux window index numbers.
 
     -h, --help
         Print this text.
