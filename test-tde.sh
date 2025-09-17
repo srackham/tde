@@ -95,7 +95,7 @@ run_test "Single directory from outside tmux" "./tde $PROJECT1" "tmux new-window
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
-tde: warning: tmux session 'tde' is attached to another client terminal
+tde: warning: tmux session 'tde' is attached to 1 other client terminal
 tmux attach-session -t tde"
 
 TMUX=tde # Inside a tmux session called 'tde'
