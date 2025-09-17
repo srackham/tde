@@ -12,7 +12,7 @@ SYNOPSIS
         tde [OPTION...] [PROJECT_DIR...]
 
 DESCRIPTION
-    `tde` is a bash script that opens project directory workspaces in separate
+    tde is a bash script that opens project directory workspaces in separate
     tmux windows. The number of tmux panes and optional launch commands can be
     specified per workspace window.
 
@@ -59,7 +59,7 @@ OPTIONS
     -s, --session SESSION_NAME
         Specify the tmux session name. The --session option determines the
         configuration file name, for example the '--session go-dev' command
-        option would set configuration file name to 'go-dev.conf`. The default
+        option would set configuration file name to 'go-dev.conf'. The default
         session name is 'tde'.
 
     -v, --verbose
@@ -72,7 +72,7 @@ CONFIGURATION FILES
         [OPTION...] PROJECT_DIR
 
     If only a PROJECT_DIR is specified then the options default to the
-    command-line options. Blank lines and lines beginning with a `#` character
+    command-line options. Blank lines and lines beginning with a '#' character
     are skipped.
 
     The following example configuration file line creates a tmux window with
