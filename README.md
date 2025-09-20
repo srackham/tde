@@ -30,13 +30,13 @@ DESCRIPTION
 
     For each project workspace directory:
 
-    1. A new tmux window is created (see --window-name option).
-    2. The window is split into columns (see --columns option).
-    3. If PANES is greater than COLUMNS then remaining panes are 
-       stacked vertically in the right-hand column.
-    4. The focus pane is selected (see --focus option).
+        1. A new tmux window is created (see --window-name option).
+        2. The window is split into columns (see --columns option).
+        3. If PANES is greater than COLUMNS then remaining panes are 
+           stacked vertically in the right-hand column.
+        4. The focus pane is selected (see --focus option).
 
-    Finally the first newly created project window is selected and the session
+    The first newly created project window is selected and the session
     is attached to the client terminal.
 
 OPTIONS
@@ -58,7 +58,7 @@ OPTIONS
         PANE must be between 1 and the value specified by the --panes option.
         For example '3:lazyvim' executes the lazyvim command in pane 3.
 
-    -p,--panes=PANES
+    -p,--panes PANES
         The number of panes created in the tmux window. PANES is 1..9. This
         option value defaults to 1. See also the --columns option.
 
@@ -90,11 +90,9 @@ CONFIGURATION FILES
     --panes, --window-name, --columns. Omitted option values default to their
     command-line values.
 
-    If only a PROJECT_DIR is specified then the options default to the
-    command-line options. Blank lines and lines beginning with a '#' character
-    are skipped.
+    Blank lines and lines beginning with a '#' character are skipped.
 
-    Unless overridden by the --config option, configuration file path names
+    Configuration file path names (unless overridden by the --config option)
     follow XDG Base Directory conventions:
 
     ${XDG_CONFIG_HOME:-$HOME/.config}/tde/<session-name>.conf
@@ -105,9 +103,10 @@ CONFIGURATION FILES
 
     --panes 3 --launch 1:nvim --launch 3:lazygit ~/nixos-configurations
 
-    The next example creates a tmux window called 'monitor' with four panes.
-    The first is a terminal; the second, third and forth running htop, iotop and
-    nethogs performance monitoring applications:
+    The next example creates a tmux window called 'monitor' with four panes
+    layed out in three columns: pane 1 in the first column; pane 2 in the
+    second; panes 3 and 4 in the third. The first is a terminal; the second runs
+    htop; the third runs htop; the fourth runs nethogs:
 
     -x 3 -p 4 -l 2:htop -l '3:sudo iotop' -l '4:sudo nethogs' -w monitor ~
 ```
