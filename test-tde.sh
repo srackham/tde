@@ -104,7 +104,7 @@ tmux split-window -h -t mysession:999 -c /tmp/test-tde/project1
 tmux split-window -h -t mysession:999 -c /tmp/test-tde/project1
 tmux split-window -v -t mysession:999 -c /tmp/test-tde/project1
 tmux select-layout -E -t mysession:999.1
-tmux select-layout -E -t mysession:999.2
+tmux select-layout -E -t mysession:999.3
 tmux select-pane -t mysession:999.1
 tmux select-window -t mysession:999
 tmux attach-session -t mysession"
@@ -145,7 +145,7 @@ tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
 tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
 tmux split-window -h -t tde:999 -c /tmp/test-tde/project1
 tmux select-layout -E -t tde:999.1
-tmux select-layout -E -t tde:999.2
+tmux select-layout -E -t tde:999.4
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999"
 
