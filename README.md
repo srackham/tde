@@ -32,7 +32,7 @@ DESCRIPTION
 
         1. A new tmux window is created (see --window-name option).
         2. The window is split into columns (see --columns option).
-        3. If PANES is greater than COLUMNS then remaining panes are 
+        3. If PANES is greater than COLUMNS then remaining panes are
            stacked vertically in the right-hand column.
         4. The focus pane is selected (see --focus option).
 
@@ -47,7 +47,7 @@ OPTIONS
     -h, --help
         Print this text.
 
-    -c, --config CONFIG_FILE
+    -c, --config-file CONFIG_FILE
         Specify the path of a configuration file.
 
     -f, --focus PANE
@@ -74,8 +74,9 @@ OPTIONS
        replaced with hyphens.
 
     -x, --columns COLUMNS
-        Split the tmux window into COLUMNS columns. COLUMNS is between 1 and PANES. The
-        default option value is 1 (if PANES=1) or 2 (if PANES is 2 or greater).
+        Split the tmux window into COLUMNS columns. COLUMNS is between 1 and
+        PANES. The default option value is 1 (if PANES=1) or 2 (if PANES is 2 or
+        greater).
 
     -v, --verbose
         Print tmux commands.
@@ -92,8 +93,8 @@ CONFIGURATION FILES
 
     Blank lines and lines beginning with a '#' character are skipped.
 
-    Configuration file path names (unless overridden by the --config option)
-    follow XDG Base Directory conventions:
+    Configuration file path names (unless overridden by the --config-file
+    option) follow XDG Base Directory conventions:
 
     ${XDG_CONFIG_HOME:-$HOME/.config}/tde/<session-name>.conf
 
