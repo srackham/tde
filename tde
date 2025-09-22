@@ -56,6 +56,13 @@ OPTIONS
         The number of panes created in the tmux window. PANES is 1..9. This
         option value defaults to 1. See also the --columns option.
 
+    -t, --tmux-file TMUX_FILE
+        Specify the path of a file containing tmux commands. TMUX_FILE is
+        sourced and its commands executed before tde exits. If this option is
+        not specified tde sources the optional '_default.tmux' file followed by
+        the optional '<session-name>.tmux' file from the configuration files
+        directory.
+
     -s, --session SESSION_NAME
         Specify the tmux session name. The --session option determines the
         configuration file name, for example the '--session go-dev' command
@@ -125,6 +132,7 @@ PANES=1
 COLS=
 FOCUS=1
 CONFIG_FILE=
+TMUX_FILE=
 SESSION_NAME="tde"
 WINDOW_NAME=
 LAUNCH_OPTS=()
@@ -428,6 +436,10 @@ while [[ $# -gt 0 ]]; do
         CONFIG_FILE="${2-}"
         shift 2
         ;;
+    -t | --tmux-file)
+        TMUX_FILE="${2-}"
+        shift 2
+        ;;
     -p | --panes)
         validate_panes "${2-}"
         PANES="$2"
@@ -555,4 +567,17 @@ done
 if [[ -n "$FIRST_WIN_INDEX" ]]; then
     tmux_cmd select-window -t "$SESSION_NAME:$FIRST_WIN_INDEX"
 fi
+
+# Source and execute optional tmux command files
+if [[ -z "$TMUX_FILE" ]]; then
+    TMUX_FILE="$conf_dir/${SESSION_NAME}.tmux"
+fi
+for tmux_file in "$conf_dir/_default.tmux" "$TMUX_FILE"; do
+    if [[ -f "$tmux_file" ]]; then
+        tmux_cmd source-file -t "$SESSION_NAME:" "$tmux_file"
+    else
+        write_verbose_message "tmux command file '$tmux_file' not found"
+    fi
+done
+
 attach_session "$SESSION_NAME"

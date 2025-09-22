@@ -65,6 +65,13 @@ OPTIONS
         The number of panes created in the tmux window. PANES is 1..9. This
         option value defaults to 1. See also the --columns option.
 
+    -t, --tmux-file TMUX_FILE
+        Specify the path of a file containing tmux commands. TMUX_FILE is
+        sourced and its commands executed before tde exits. If this option is
+        not specified tde sources the optional '_default.tmux' file followed by
+        the optional '<session-name>.tmux' file from the configuration files
+        directory.
+
     -s, --session SESSION_NAME
         Specify the tmux session name. The --session option determines the
         configuration file name, for example the '--session go-dev' command
