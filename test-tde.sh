@@ -575,7 +575,7 @@ tmux send-keys -t tde:999.3 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999" 0
 
-run_test "Bad session name" "./tde -s 'bad#session#name'" "tde: invalid --session option 'bad#session#name': must contain only alphanumeric characters, dashes, underscores, or periods" 1
+run_test "Bad session name" "./tde -s 'bad#session#name'" "tde: invalid --session option 'bad#session#name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods" 1
 
 run_test "--config-file option: missing configuration file" "./tde --config-file '$TDE_CONFIG_DIR/missing-file.conf'" "tde: warning: configuration file '/tmp/test-tde/.config/tde/missing-file.conf' not found
 tde: session does not exist: 'tde'" 1

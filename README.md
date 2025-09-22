@@ -66,7 +66,9 @@ OPTIONS
         Specify the tmux session name. The --session option determines the
         configuration file name, for example the '--session go-dev' command
         option would set configuration file name to 'go-dev.conf'. The default
-        session name is 'tde'. See CONFIGURATION FILES.
+        session name is 'tde'. SESSION_NAME must begin with an alpha numberic
+        character and can only contain only alphanumeric characters, dashes,
+        underscores, or periods.
 
     -w, --window-name WINDOW_NAME
         The tmux window name. Defaults to the project directory's base name
