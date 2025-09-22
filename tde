@@ -215,9 +215,9 @@ tmux_cmd() {
 }
 
 # Generate window name from directory
-window_name() {
+get_window_name() {
     local dir="$1"
-    basename "$dir"
+    basename "$(realpath "$dir")"
 }
 
 validate_panes() {
@@ -531,7 +531,7 @@ FIRST_WIN_INDEX=""
 for index in "${!PROJECT_DEFS[@]}"; do
     def="${PROJECT_DEFS[$index]}"
     IFS="|" read -r focus window_name cols panes launch_def dir <<<"$def"
-    WIN_NAME="${window_name:-$(basename "$dir")}"
+    WIN_NAME="${window_name:-$(get_window_name "$dir")}"
     if ! session_exists "$SESSION_NAME"; then
         tmux_cmd new-session -d -s "$SESSION_NAME" -c "$dir" -n "$WIN_NAME"
         if [[ $TDE_TEST == true ]]; then

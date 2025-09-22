@@ -122,7 +122,6 @@ tmux select-window -t tde:999
 tmux command file '/tmp/test-tde/.config/tde/_default.tmux' not found
 tmux command file '/tmp/test-tde/.config/tde/tde.tmux' not found"
 
-
 run_test "Dry-run with 2 panes" "./tde -p 2 $PROJECT1" "tmux new-window -t tde: -c $PROJECT1 -n $(basename "$PROJECT1")
 tmux set-option -t tde:999 pane-base-index 1
 tmux split-window -h -t tde:999 -c $PROJECT1
