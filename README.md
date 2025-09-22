@@ -48,7 +48,10 @@ OPTIONS
         Print this text.
 
     -c, --config-file CONFIG_FILE
-        Specify the path of a configuration file.
+        Specify the path of a tde configuration file. If this option is not
+        specified tde sources the optional '_default.conf' file followed by the
+        optional '<session-name>.conf' file from the configuration files
+        directory. See CONFIGURATION FILES.
 
     -f, --focus PANE
         Focus pane number PANE (1..PANES). The default value is 1.
@@ -84,32 +87,32 @@ OPTIONS
         Print tmux commands.
 
 CONFIGURATION FILES
-    A configuration file specifies a set of project workspace windows, one per
-    line, formatted like:
+    A tde configuration file specifies a set of project workspace windows, one
+    per line, formatted like:
 
         [OPTION...] PROJECT_DIR
 
-    The following options are valid in configuration files: --focus, --launch,
-    --panes, --window-name, --columns. Omitted option values default to their
-    command-line values.
+    The following tde options are valid in configuration files: --focus,
+    --launch, --panes, --window-name, --columns. Omitted option values default
+    to their command-line values.
 
     Blank lines and lines beginning with a '#' character are skipped.
 
-    Configuration file path names (unless overridden by the --config-file
-    option) follow XDG Base Directory conventions:
+    The default configuration files directory follows XDG Base Directory
+    conventions:
 
-    ${XDG_CONFIG_HOME:-$HOME/.config}/tde/<session-name>.conf
+        ${XDG_CONFIG_HOME:-$HOME/.config}/tde/
 
     The following example configuration file line creates a tmux window with
-    three panes in the ~/nixos-configurations working directory, the first pane
+    three panes in the ~/nixos-configurations working directory. The first pane
     runs nvim, the third pane runs lazygit:
 
-    --panes 3 --launch 1:nvim --launch 3:lazygit ~/nixos-configurations
+        --panes 3 --launch 1:nvim --launch 3:lazygit ~/nixos-configurations
 
     The next example creates a tmux window called 'monitor' with four panes
     layed out in three columns: pane 1 in the first column; pane 2 in the
     second; panes 3 and 4 in the third. The first is a terminal; the second runs
-    htop; the third runs htop; the fourth runs nethogs:
+    htop; the third runs iotop; the fourth runs nethogs:
 
-    -x 3 -p 4 -l 2:htop -l '3:sudo iotop' -l '4:sudo nethogs' -w monitor ~
+        -x 3 -p 4 -l 2:htop -l '3:sudo iotop' -l '4:sudo nethogs' -w monitor ~
 ```
