@@ -426,7 +426,7 @@ tmux send-keys -t tde:999.4 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999"
 
-run_test "Illegal command option" "./tde -X $PROJECT1" "tde: unknown option: -X" 1
+run_test "Illegal command option" "./tde -X $PROJECT1" "tde: error: unknown option: -X" 1
 
 run_test "Multiple project directories with 2 panes, and a launch command with a complex string" "./tde -p 2 -l '1:echo \"Hello World\!\" && sleep 1' $PROJECT1 $PROJECT2" "tmux new-window -t tde: -c $PROJECT1 -n project1
 tmux set-option -t tde:999 pane-base-index 1
@@ -451,30 +451,30 @@ run_test "Help message (first two lines)" "./tde --help | head -n 2" "NAME
 run_test "Just reattach to existing session if no project directory arguments are specified" "./tde" "" 0
 
 # Tests for invalid command options
-run_test "Invalid --panes value '0'" "./tde -p 0 $PROJECT1" "tde: invalid --panes option '0': must be between 1 and 9" 1
-run_test "Invalid --panes value '10'" "./tde --panes 10 $PROJECT1" "tde: invalid --panes option '10': must be between 1 and 9" 1
-run_test "Invalid --panes value 'abc'" "./tde -p abc $PROJECT1" "tde: invalid --panes option 'abc': must be between 1 and 9" 1
-run_test "Invalid --launch pane number '0'" "./tde -p 2 -l 0:ls $PROJECT1" "tde: invalid --launch option pane number '0': must be between 1 and 2" 1
-run_test "Invalid --launch pane number (too high)" "./tde -p 2 -l 3:ls $PROJECT1" "tde: invalid --launch option pane number '3': must be between 1 and 2" 1
-run_test "Invalid --launch pane number (non-numeric)" "./tde -p 2 -l x:ls $PROJECT1" "tde: invalid --launch option pane number 'x': must be between 1 and 2" 1
-run_test "Invalid --launch value" "./tde -l bad-launch $PROJECT1" "tde: invalid --launch option 'bad-launch'" 1
-run_test "Missing project directory" "./tde /nonexistent/path" "tde: project directory not found: '/nonexistent/path'" 1
-run_test "Invalid --columns value 'abc'" "./tde -x abc -p 2 $PROJECT1" "tde: invalid --columns option 'abc': must be between 1 and 9" 1
-run_test "Invalid --columns value '9'" "./tde -x 0 -p 2 $PROJECT1" "tde: invalid --columns option '0': must be between 1 and 9" 1
-run_test "Invalid --focus value '0'" "./tde -f 0 $PROJECT1" "tde: invalid --focus option '0': must be between 1 and 9" 1
-run_test "Invalid --focus value '2'" "./tde -f 2 $PROJECT1" "tde: invalid --focus option '2': must be between 1 and 1" 1
-run_test "Invalid --columns value '3'" "./tde -x 3 -p 2 $PROJECT1" "tde: invalid --columns option '3': must be between 1 and 2" 1
+run_test "Invalid --panes value '0'" "./tde -p 0 $PROJECT1" "tde: error: invalid --panes option '0': must be between 1 and 9" 1
+run_test "Invalid --panes value '10'" "./tde --panes 10 $PROJECT1" "tde: error: invalid --panes option '10': must be between 1 and 9" 1
+run_test "Invalid --panes value 'abc'" "./tde -p abc $PROJECT1" "tde: error: invalid --panes option 'abc': must be between 1 and 9" 1
+run_test "Invalid --launch pane number '0'" "./tde -p 2 -l 0:ls $PROJECT1" "tde: error: invalid --launch option pane number '0': must be between 1 and 2" 1
+run_test "Invalid --launch pane number (too high)" "./tde -p 2 -l 3:ls $PROJECT1" "tde: error: invalid --launch option pane number '3': must be between 1 and 2" 1
+run_test "Invalid --launch pane number (non-numeric)" "./tde -p 2 -l x:ls $PROJECT1" "tde: error: invalid --launch option pane number 'x': must be between 1 and 2" 1
+run_test "Invalid --launch value" "./tde -l bad-launch $PROJECT1" "tde: error: invalid --launch option 'bad-launch'" 1
+run_test "Missing project directory" "./tde /nonexistent/path" "tde: error: project directory not found: '/nonexistent/path'" 1
+run_test "Invalid --columns value 'abc'" "./tde -x abc -p 2 $PROJECT1" "tde: error: invalid --columns option 'abc': must be between 1 and 9" 1
+run_test "Invalid --columns value '9'" "./tde -x 0 -p 2 $PROJECT1" "tde: error: invalid --columns option '0': must be between 1 and 9" 1
+run_test "Invalid --focus value '0'" "./tde -f 0 $PROJECT1" "tde: error: invalid --focus option '0': must be between 1 and 9" 1
+run_test "Invalid --focus value '2'" "./tde -f 2 $PROJECT1" "tde: error: invalid --focus option '2': must be between 1 and 1" 1
+run_test "Invalid --columns value '3'" "./tde -x 3 -p 2 $PROJECT1" "tde: error: invalid --columns option '3': must be between 1 and 2" 1
 
 run_test "Duplicate project directories arguments" "./tde '$PROJECT1' '$PROJECT1'" "tmux new-window -t tde: -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-pane -t tde:999.1
-tde: duplicate project workspace name: 'project1' exists in session 'tde', skipping
+tde: warning: duplicate project workspace name: 'project1' exists in session 'tde', skipping
 tmux select-window -t tde:999"
 
 TDE_CLIENT_COUNT=0
 
 # Tests for configuration file
-run_test "No project directories specified" "./tde" "tde: session does not exist: 'tde'" 1
+run_test "No project directories specified" "./tde" "tde: error: session does not exist: 'tde'" 1
 
 write_conf tde "/tmp/test-tde/project1"
 run_test "Configuration file with single directory-only entry" "./tde" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
@@ -485,7 +485,7 @@ tmux select-window -t tde:999" 0
 run_test "Duplicate project workspace name" "./tde '$PROJECT1'" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-pane -t tde:999.1
-tde: duplicate project workspace name: 'project1' exists in session 'tde', skipping
+tde: warning: duplicate project workspace name: 'project1' exists in session 'tde', skipping
 tmux select-window -t tde:999"
 
 run_test "Command-line panes option with directory-only configuration file entry" "./tde -p 2" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
@@ -576,14 +576,14 @@ tmux send-keys -t tde:999.3 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999" 0
 
-run_test "Bad session name" "./tde -s 'bad#session#name'" "tde: invalid --session option 'bad#session#name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods" 1
+run_test "Bad session name" "./tde -s 'bad#session#name'" "tde: error: invalid --session option 'bad#session#name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods" 1
 
-run_test "--config-file option: missing configuration file" "./tde --config-file '$TDE_CONFIG_DIR/missing-file.conf'" "tde: session does not exist: 'tde'" 1
+run_test "--config-file option: missing configuration file" "./tde --config-file '$TDE_CONFIG_DIR/missing-file.conf'" "tde: error: session does not exist: 'tde'" 1
 run_test "--config-file option: missing configuration file; verbose" "./tde -v --config-file '$TDE_CONFIG_DIR/missing-file.conf'" "configuration file '/tmp/test-tde/.config/tde/_default.conf' not found
 configuration file '/tmp/test-tde/.config/tde/missing-file.conf' not found
-tde: session does not exist: 'tde'" 1
+tde: error: session does not exist: 'tde'" 1
 
-run_test "--sesion option: missing configuration file warning" "./tde -s 'session-name'" "tde: session does not exist: 'session-name'" 1
+run_test "--sesion option: missing configuration file warning" "./tde -s 'session-name'" "tde: error: session does not exist: 'session-name'" 1
 
 TMUX=another-session
 run_test "Missing session configuration file warning; refusing attachment; one project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
