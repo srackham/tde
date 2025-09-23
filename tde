@@ -58,10 +58,10 @@ OPTIONS
 
     -t, --tmux-file TMUX_FILE
         Specify the path of a file containing tmux commands. TMUX_FILE is
-        sourced and its commands executed before tde exits. If this option is
-        not specified tde sources the optional '_default.tmux' file followed by
-        the optional '<session-name>.tmux' file from the configuration files
-        directory.
+        sourced and its commands executed immediately following tmux session
+        creation. If this option is not specified tde sources the optional
+        '_default.tmux' file followed by the optional '<session-name>.tmux' file
+        from the configuration files directory.
 
     -s, --session SESSION_NAME
         Specify the tmux session name. The --session option determines the
@@ -537,10 +537,22 @@ for index in "${!PROJECT_DEFS[@]}"; do
     IFS="|" read -r focus window_name cols panes launch_def dir <<<"$def"
     WIN_NAME="${window_name:-$(get_window_name "$dir")}"
     if ! session_exists "$SESSION_NAME"; then
+        # Create session
         tmux_cmd new-session -d -s "$SESSION_NAME" -c "$dir" -n "$WIN_NAME"
         if [[ $TDE_TEST == true ]]; then
             TDE_SESSION_CREATED=true # So the session is not created again
         fi
+        # Source and execute optional tmux command files
+        if [[ -z "$TMUX_FILE" ]]; then
+            TMUX_FILE="$conf_dir/${SESSION_NAME}.tmux"
+        fi
+        for tmux_file in "$conf_dir/_default.tmux" "$TMUX_FILE"; do
+            if [[ -f "$tmux_file" ]]; then
+                tmux_cmd source-file -t "$SESSION_NAME:" "$tmux_file"
+            else
+                write_verbose_message "tmux command file '$tmux_file' not found"
+            fi
+        done
     else
         if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
             write_warning_msg "duplicate project workspace name: '$WIN_NAME' exists in session '$SESSION_NAME', skipping"
@@ -571,17 +583,5 @@ done
 if [[ -n "$FIRST_WIN_INDEX" ]]; then
     tmux_cmd select-window -t "$SESSION_NAME:$FIRST_WIN_INDEX"
 fi
-
-# Source and execute optional tmux command files
-if [[ -z "$TMUX_FILE" ]]; then
-    TMUX_FILE="$conf_dir/${SESSION_NAME}.tmux"
-fi
-for tmux_file in "$conf_dir/_default.tmux" "$TMUX_FILE"; do
-    if [[ -f "$tmux_file" ]]; then
-        tmux_cmd source-file -t "$SESSION_NAME:" "$tmux_file"
-    else
-        write_verbose_message "tmux command file '$tmux_file' not found"
-    fi
-done
 
 attach_session "$SESSION_NAME"

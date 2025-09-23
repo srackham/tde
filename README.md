@@ -4,11 +4,21 @@ A simple tmux-based text IDE.
 
 ## Installation
 
+Install [tmux](https://github.com/tmux/tmux/) if it is not already installed.
+
+Download `tde` and the default tmux commands file:
+
+```bash
+mkdir -p ~/.local/bin
+curl -L -o ~/.local/bin/tde https://raw.githubusercontent.com/srackham/tde/main/tde
+chmod +x ~/.local/bin/tde
+mkdir -p ~/.config/tde
+curl -L -o ~/.config/tde/_default.tmux https://raw.githubusercontent.com/srackham/tde/main/_default.tmux
 ```
-curl -L -o tde https://raw.githubusercontent.com/srackham/tde/main/tde
-chmod +x tde
-./tde --help
-```
+
+## Examples
+
+TODO:
 
 ## Usage
 
@@ -67,10 +77,10 @@ OPTIONS
 
     -t, --tmux-file TMUX_FILE
         Specify the path of a file containing tmux commands. TMUX_FILE is
-        sourced and its commands executed before tde exits. If this option is
-        not specified tde sources the optional '_default.tmux' file followed by
-        the optional '<session-name>.tmux' file from the configuration files
-        directory.
+        sourced and its commands executed immediately following tmux session
+        creation. If this option is not specified tde sources the optional
+        '_default.tmux' file followed by the optional '<session-name>.tmux' file
+        from the configuration files directory.
 
     -s, --session SESSION_NAME
         Specify the tmux session name. The --session option determines the
