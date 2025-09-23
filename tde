@@ -150,7 +150,7 @@ write_warning_msg() {
 
 write_verbose_message() {
     if [[ -n "$VERBOSE" ]]; then
-        echo "$1"
+        echo "$(basename "$0"): $1" >&2
     fi
 }
 
@@ -217,7 +217,7 @@ tmux_cmd() {
     if [[ -n "$DRY_RUN" || $TDE_TEST == true ]]; then
         echo "tmux $*"
     else
-        write_verbose_message "tmux $*"
+        write_verbose_message "info: tmux $*"
         tmux "$@"
     fi
 }
@@ -515,7 +515,7 @@ if ! session_exists "$SESSION_NAME"; then
                 parse_project_def "$line"
             done <"$conf_file"
         else
-            write_verbose_message "configuration file '$conf_file' not found"
+            write_verbose_message "info: configuration file '$conf_file' not found"
         fi
     done
 fi
@@ -554,7 +554,7 @@ for index in "${!PROJECT_DEFS[@]}"; do
             if [[ -f "$tmux_file" ]]; then
                 tmux_cmd source-file -t "$SESSION_NAME:" "$tmux_file"
             else
-                write_verbose_message "tmux command file '$tmux_file' not found"
+                write_verbose_message "info: tmux command file '$tmux_file' not found"
             fi
         done
     else

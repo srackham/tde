@@ -475,10 +475,10 @@ TDE_CLIENT_COUNT=0
 run_test "No project directories specified" "./tde" "tde: error: session does not exist: 'tde'" 1
 
 write_conf tde "/tmp/test-tde/project1"
-run_test "Configuration file with single directory-only entry; verbose" "./tde --verbose" "configuration file '/tmp/test-tde/.config/tde/_default.conf' not found
+run_test "Configuration file with single directory-only entry; verbose" "./tde --verbose" "tde: info: configuration file '/tmp/test-tde/.config/tde/_default.conf' not found
 tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
-tmux command file '/tmp/test-tde/.config/tde/_default.tmux' not found
-tmux command file '/tmp/test-tde/.config/tde/tde.tmux' not found
+tde: info: tmux command file '/tmp/test-tde/.config/tde/_default.tmux' not found
+tde: info: tmux command file '/tmp/test-tde/.config/tde/tde.tmux' not found
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999" 0
@@ -580,8 +580,8 @@ tmux select-window -t tde:999" 0
 run_test "Bad session name" "./tde -s 'bad#session#name'" "tde: error: invalid --session option 'bad#session#name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods" 1
 
 run_test "--config-file option: missing configuration file" "./tde --config-file '$TDE_CONFIG_DIR/missing-file.conf'" "tde: error: session does not exist: 'tde'" 1
-run_test "--config-file option: missing configuration file; verbose" "./tde -v --config-file '$TDE_CONFIG_DIR/missing-file.conf'" "configuration file '/tmp/test-tde/.config/tde/_default.conf' not found
-configuration file '/tmp/test-tde/.config/tde/missing-file.conf' not found
+run_test "--config-file option: missing configuration file; verbose" "./tde -v --config-file '$TDE_CONFIG_DIR/missing-file.conf'" "tde: info: configuration file '/tmp/test-tde/.config/tde/_default.conf' not found
+tde: info: configuration file '/tmp/test-tde/.config/tde/missing-file.conf' not found
 tde: error: session does not exist: 'tde'" 1
 
 run_test "--sesion option: missing configuration file warning" "./tde -s 'session-name'" "tde: error: session does not exist: 'session-name'" 1
