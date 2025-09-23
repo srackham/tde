@@ -159,7 +159,11 @@ session_exists() {
     if [[ $TDE_TEST == true ]]; then
         [[ "$TDE_SESSION_CREATED" == true || "$TDE_CLIENT_COUNT" -gt 0 ]]
     else
-        tmux has-session -t "$session_name" 2>/dev/null
+        if [[ -n $DRY_RUN ]]; then
+            tmux has-session -t "$session_name" 2>/dev/null || [[ "$TDE_SESSION_CREATED" == true ]]
+        else
+            tmux has-session -t "$session_name" 2>/dev/null
+        fi
     fi
 }
 
@@ -539,7 +543,7 @@ for index in "${!PROJECT_DEFS[@]}"; do
     if ! session_exists "$SESSION_NAME"; then
         # Create session
         tmux_cmd new-session -d -s "$SESSION_NAME" -c "$dir" -n "$WIN_NAME"
-        if [[ $TDE_TEST == true ]]; then
+        if [[ -n "$DRY_RUN" || $TDE_TEST == true ]]; then
             TDE_SESSION_CREATED=true # So the session is not created again
         fi
         # Source and execute optional tmux command files

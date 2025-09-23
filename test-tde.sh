@@ -118,9 +118,7 @@ tmux select-window -t tde:999"
 run_test "--window-name option on command-line; verbose option" "./tde --verbose -w mywindow $PROJECT1" "tmux new-window -t tde: -c /tmp/test-tde/project1 -n mywindow
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-pane -t tde:999.1
-tmux select-window -t tde:999
-tmux command file '/tmp/test-tde/.config/tde/_default.tmux' not found
-tmux command file '/tmp/test-tde/.config/tde/tde.tmux' not found"
+tmux select-window -t tde:999"
 
 run_test "Dry-run with 2 panes" "./tde -p 2 $PROJECT1" "tmux new-window -t tde: -c $PROJECT1 -n $(basename "$PROJECT1")
 tmux set-option -t tde:999 pane-base-index 1
@@ -477,7 +475,10 @@ TDE_CLIENT_COUNT=0
 run_test "No project directories specified" "./tde" "tde: error: session does not exist: 'tde'" 1
 
 write_conf tde "/tmp/test-tde/project1"
-run_test "Configuration file with single directory-only entry" "./tde" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+run_test "Configuration file with single directory-only entry; verbose" "./tde --verbose" "configuration file '/tmp/test-tde/.config/tde/_default.conf' not found
+tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux command file '/tmp/test-tde/.config/tde/_default.tmux' not found
+tmux command file '/tmp/test-tde/.config/tde/tde.tmux' not found
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999" 0
