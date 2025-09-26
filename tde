@@ -148,7 +148,7 @@ write_warning_msg() {
     echo "$(basename "$0"): warning: $1" >&2
 }
 
-write_verbose_message() {
+write_verbose_msg() {
     if [[ -n "$VERBOSE" ]]; then
         echo "$(basename "$0"): $1" >&2
     fi
@@ -217,7 +217,7 @@ tmux_cmd() {
     if [[ -n "$DRY_RUN" || $TDE_TEST == true ]]; then
         echo "tmux $*"
     else
-        write_verbose_message "info: tmux $*"
+        write_verbose_msg "info: tmux $*"
         tmux "$@"
     fi
 }
@@ -515,10 +515,29 @@ if ! session_exists "$SESSION_NAME"; then
                 parse_project_def "$line"
             done <"$conf_file"
         else
-            write_verbose_message "info: configuration file '$conf_file' not found"
+            write_verbose_msg "info: configuration file '$conf_file' not found"
         fi
     done
 fi
+
+# Source and execute optional tmux command files
+if [[ -z "$TMUX_FILE" ]]; then
+    tmux_files=("$conf_dir/_default.tmux" "$conf_dir/${SESSION_NAME}.tmux")
+else
+    tmux_files=("$TMUX_FILE")
+fi
+for tmux_file in "${tmux_files[@]}"; do
+    if [[ -f "$tmux_file" ]]; then
+        tmux_cmd source-file -t "$SESSION_NAME:" "$tmux_file"
+    else
+        if [[ -z "$TMUX_FILE" ]]; then
+            write_verbose_msg "info: tmux command file '$tmux_file' not found"
+        else
+            write_error_msg "tmux command file '$tmux_file' not found"
+            exit 1
+        fi
+    fi
+done
 
 # Append command-line PROJECT_DIRS to PROJECT_DEFS
 for dir in "${PROJECT_DIRS[@]}"; do
@@ -546,17 +565,6 @@ for index in "${!PROJECT_DEFS[@]}"; do
         if [[ -n "$DRY_RUN" || $TDE_TEST == true ]]; then
             TDE_SESSION_CREATED=true # So the session is not created again
         fi
-        # Source and execute optional tmux command files
-        if [[ -z "$TMUX_FILE" ]]; then
-            TMUX_FILE="$conf_dir/${SESSION_NAME}.tmux"
-        fi
-        for tmux_file in "$conf_dir/_default.tmux" "$TMUX_FILE"; do
-            if [[ -f "$tmux_file" ]]; then
-                tmux_cmd source-file -t "$SESSION_NAME:" "$tmux_file"
-            else
-                write_verbose_message "info: tmux command file '$tmux_file' not found"
-            fi
-        done
     else
         if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
             write_warning_msg "duplicate project workspace name: '$WIN_NAME' exists in session '$SESSION_NAME', skipping"
