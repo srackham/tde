@@ -3,6 +3,7 @@
 trap 'echo; echo "$TEST_COUNT tests passed!"' EXIT
 
 set -euo pipefail
+# set -x # Turn on execution trace
 
 TEST_DIR=/tmp/test-tde
 TDE_CONFIG_DIR="$TEST_DIR/.config/tde"
@@ -113,7 +114,9 @@ tmux set-option -t tde:999 pane-base-index 1
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999"
 
-run_test "--window-name option on command-line; verbose option" "./tde --verbose -w mywindow $PROJECT1" "tmux new-window -t tde: -c /tmp/test-tde/project1 -n mywindow
+run_test "--window-name option on command-line; verbose option" "./tde --verbose -w mywindow $PROJECT1" "tde: info: tmux command file '/tmp/test-tde/.config/tde/_default.tmux' not found
+tde: info: tmux command file '/tmp/test-tde/.config/tde/tde.tmux' not found
+tmux new-window -t tde: -c /tmp/test-tde/project1 -n mywindow
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999"
@@ -474,9 +477,9 @@ run_test "No project directories specified" "./tde" "tde: error: session does no
 
 write_conf tde.conf "/tmp/test-tde/project1"
 run_test "Configuration file with single directory-only entry; verbose" "./tde --verbose" "tde: info: configuration file '/tmp/test-tde/.config/tde/_default.conf' not found
-tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tde: info: tmux command file '/tmp/test-tde/.config/tde/_default.tmux' not found
 tde: info: tmux command file '/tmp/test-tde/.config/tde/tde.tmux' not found
+tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999" 0
@@ -577,12 +580,20 @@ tmux select-window -t tde:999" 0
 
 run_test "Bad session name" "./tde -s 'bad#session#name'" "tde: error: invalid --session option 'bad#session#name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods" 1
 
-run_test "--config-file option: missing configuration file" "./tde --config-file '$TDE_CONFIG_DIR/missing-file.conf'" "tde: error: session does not exist: 'tde'" 1
+run_test "--config-file option: missing configuration file error" "./tde --config-file '$TDE_CONFIG_DIR/missing-file.conf'" "tde: error: session does not exist: 'tde'" 1
+
 run_test "--config-file option: missing configuration file; verbose" "./tde -v --config-file '$TDE_CONFIG_DIR/missing-file.conf'" "tde: info: configuration file '/tmp/test-tde/.config/tde/_default.conf' not found
 tde: info: configuration file '/tmp/test-tde/.config/tde/missing-file.conf' not found
+tde: info: tmux command file '/tmp/test-tde/.config/tde/_default.tmux' not found
+tde: info: tmux command file '/tmp/test-tde/.config/tde/tde.tmux' not found
 tde: error: session does not exist: 'tde'" 1
 
-run_test "--sesion option: missing configuration file warning" "./tde -s 'session-name'" "tde: error: session does not exist: 'session-name'" 1
+run_test "--session option: missing configuration file warning" "./tde -s 'session-name'" "tde: error: session does not exist: 'session-name'" 1
+
+run_test "--tmux-file option: missing tmux configuration file error" "./tde --tmux-file '$TDE_CONFIG_DIR/missing-file.tmux'" "tde: error: tmux command file '/tmp/test-tde/.config/tde/missing-file.tmux' not found" 1
+
+run_test "--tmux-file option: missing tmux configuration file error; verbose" "./tde --tmux-file '$TDE_CONFIG_DIR/missing-file.tmux' --verbose" "tde: info: configuration file '/tmp/test-tde/.config/tde/_default.conf' not found
+tde: error: tmux command file '/tmp/test-tde/.config/tde/missing-file.tmux' not found" 1
 
 TMUX=another-session
 run_test "Missing session configuration file warning; refusing attachment; one project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
@@ -601,7 +612,14 @@ tde: warning: refusing to attach nested tmux session 'session-name' inside tmux 
 
 TMUX=
 write_conf session-name.conf ""
-run_test "Missing session configuration file warning; one project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
+run_test "One project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
+tmux set-option -t session-name:999 pane-base-index 1
+tmux select-pane -t session-name:999.1
+tmux select-window -t session-name:999
+tmux attach-session -t session-name"
+
+write_conf session-name.conf ""
+run_test "One project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
 tmux set-option -t session-name:999 pane-base-index 1
 tmux select-pane -t session-name:999.1
 tmux select-window -t session-name:999
