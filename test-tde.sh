@@ -79,11 +79,9 @@ run_test() {
 
 # Function to write configuration file.
 write_conf() {
-    local session="$1"
+    local filename="$1"
     local content="$2"
-    local config_file="${TDE_CONFIG_DIR:?}"/$session.conf
-    # Overwrite config file
-    printf "%s\n" "$content" >"$config_file"
+    printf "%s\n" "$content" >"${TDE_CONFIG_DIR:?}/$filename"
 }
 
 TEST_COUNT=0
@@ -474,7 +472,7 @@ TDE_CLIENT_COUNT=0
 # Tests for configuration file
 run_test "No project directories specified" "./tde" "tde: error: session does not exist: 'tde'" 1
 
-write_conf tde "/tmp/test-tde/project1"
+write_conf tde.conf "/tmp/test-tde/project1"
 run_test "Configuration file with single directory-only entry; verbose" "./tde --verbose" "tde: info: configuration file '/tmp/test-tde/.config/tde/_default.conf' not found
 tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tde: info: tmux command file '/tmp/test-tde/.config/tde/_default.tmux' not found
@@ -516,7 +514,7 @@ tmux send-keys -t tde:999.2 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999" 0
 
-write_conf tde "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
+write_conf tde.conf "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
 --panes 3 --focus 2 --window-name mywindow --launch 1:nvim --launch 3:lazygit /tmp/test-tde/project2"
 
 run_test "Configuration file with two project directories and configuration options" "./tde" "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
@@ -542,7 +540,7 @@ tmux send-keys -t tde:999.3 Enter
 tmux select-pane -t tde:999.2
 tmux select-window -t tde:999" 0
 
-write_conf tde "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
+write_conf tde.conf "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
 /tmp/test-tde/project2
 --panes 3 --launch 1:nvim --launch 3:lazygit /tmp/test-tde/project3"
 
@@ -593,7 +591,7 @@ tmux select-pane -t session-name:999.1
 tmux select-window -t session-name:999
 tde: warning: refusing to attach nested tmux session 'session-name' inside tmux session 'another-session'"
 
-write_conf session-name "/tmp/test-tde/project1"
+write_conf session-name.conf "/tmp/test-tde/project1"
 TMUX=another-session
 run_test "Single-entry configuration file; nested session warning" "./tde -s 'session-name'" "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
 tmux set-option -t session-name:999 pane-base-index 1
@@ -602,7 +600,7 @@ tmux select-window -t session-name:999
 tde: warning: refusing to attach nested tmux session 'session-name' inside tmux session 'another-session'"
 
 TMUX=
-write_conf session-name ""
+write_conf session-name.conf ""
 run_test "Missing session configuration file warning; one project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
 tmux set-option -t session-name:999 pane-base-index 1
 tmux select-pane -t session-name:999.1
