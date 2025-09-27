@@ -78,11 +78,17 @@ run_test() {
     fi
 }
 
-# Function to write configuration file.
+# Write configuration file.
 write_conf() {
     local filename="$1"
     local content="$2"
     printf "%s\n" "$content" >"${TDE_CONFIG_DIR:?}/$filename"
+}
+
+# Delete configuration file.
+rm_conf() {
+    local filename="$1"
+    rm "${TDE_CONFIG_DIR:?}/$filename"
 }
 
 TEST_COUNT=0
@@ -595,23 +601,39 @@ run_test "--tmux-file option: missing tmux configuration file error" "./tde --tm
 run_test "--tmux-file option: missing tmux configuration file error; verbose" "./tde --tmux-file '$TDE_CONFIG_DIR/missing-file.tmux' --verbose" "tde: info: configuration file '/tmp/test-tde/.config/tde/_default.conf' not found
 tde: error: tmux command file '/tmp/test-tde/.config/tde/missing-file.tmux' not found" 1
 
-TMUX=another-session
-run_test "Missing session configuration file warning; refusing attachment; one project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
-tmux set-option -t session-name:999 pane-base-index 1
-tmux select-pane -t session-name:999.1
-tmux select-window -t session-name:999
-tde: warning: refusing to attach nested tmux session 'session-name' inside tmux session 'another-session'"
+TMUX=
+TDE_CLIENT_COUNT=1
+write_conf session-name.tmux ""
+run_test "--tmux-file option: missing tmux configuration file error; verbose" "./tde --tmux-file '$TDE_CONFIG_DIR/session-name.tmux' -s session-name --verbose" "tmux source-file -t session-name: /tmp/test-tde/.config/tde/session-name.tmux
+tde: warning: tmux session 'session-name' is attached to 1 other client terminal
+tmux attach-session -t session-name"
 
+TMUX=
+TDE_CLIENT_COUNT=0
+run_test "Missing session configuration file warning; refusing attachment; one project directory argument; --verbose" "./tde -s 'session-name-2' --verbose '$PROJECT1'" "tde: info: configuration file '/tmp/test-tde/.config/tde/_default.conf' not found
+tde: info: configuration file '/tmp/test-tde/.config/tde/session-name-2.conf' not found
+tde: info: tmux command file '/tmp/test-tde/.config/tde/_default.tmux' not found
+tde: info: tmux command file '/tmp/test-tde/.config/tde/session-name-2.tmux' not found
+tmux new-session -d -s session-name-2 -c /tmp/test-tde/project1 -n project1
+tmux set-option -t session-name-2:999 pane-base-index 1
+tmux select-pane -t session-name-2:999.1
+tmux select-window -t session-name-2:999
+tmux attach-session -t session-name-2"
+
+TMUX=another-session
+TDE_CLIENT_COUNT=0
 write_conf session-name.conf "/tmp/test-tde/project1"
 TMUX=another-session
-run_test "Single-entry configuration file; nested session warning" "./tde -s 'session-name'" "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
+run_test "Single-entry configuration file; nested session warning" "./tde -s 'session-name'" "tmux source-file -t session-name: /tmp/test-tde/.config/tde/session-name.tmux
+tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
 tmux set-option -t session-name:999 pane-base-index 1
 tmux select-pane -t session-name:999.1
 tmux select-window -t session-name:999
 tde: warning: refusing to attach nested tmux session 'session-name' inside tmux session 'another-session'"
 
 TMUX=
-write_conf session-name.conf ""
+rm_conf session-name.conf
+rm_conf session-name.tmux
 run_test "One project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
 tmux set-option -t session-name:999 pane-base-index 1
 tmux select-pane -t session-name:999.1
@@ -619,10 +641,8 @@ tmux select-window -t session-name:999
 tmux attach-session -t session-name"
 
 write_conf session-name.conf ""
-run_test "One project directory argument" "./tde -s 'session-name' '$PROJECT1'" "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
-tmux set-option -t session-name:999 pane-base-index 1
-tmux select-pane -t session-name:999.1
-tmux select-window -t session-name:999
-tmux attach-session -t session-name"
+run_test "One project directory argument; missing --tmux-file" \
+    "./tde -s session-name --tmux-file /tmp/test-tde/.config/tde/missing-file.tmux '$PROJECT1'" \
+    "tde: error: tmux command file '/tmp/test-tde/.config/tde/missing-file.tmux' not found" 1
 
 exit
