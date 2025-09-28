@@ -13,7 +13,9 @@ mkdir -p ~/.local/bin
 curl -L -o ~/.local/bin/tde https://raw.githubusercontent.com/srackham/tde/main/tde
 chmod +x ~/.local/bin/tde
 mkdir -p ~/.config/tde
-curl -L -o ~/.config/tde/_default.tmux https://raw.githubusercontent.com/srackham/tde/main/_default.tmux
+curl -L -o ~/.config/tde/tde.tmux https://raw.githubusercontent.com/srackham/tde/main/tde.tmux
+curl -L -o ~/.config/tde/monitor.tmux https://raw.githubusercontent.com/srackham/tde/main/monitor.tmux
+curl -L -o ~/.config/tde/monitor.tde https://raw.githubusercontent.com/srackham/tde/main/monitor.tde
 ```
 
 ## Examples
@@ -35,8 +37,8 @@ DESCRIPTION
     tmux windows. The number of tmux panes and optional launch commands can be
     specified per workspace window.
 
-    The project directory workspaces can be specified in optional configuration
-    files or with commnand-line arguments.
+    The project directory workspaces can be specified in configuration files or
+    with commnand-line arguments.
 
     For each project workspace directory:
 
@@ -57,12 +59,6 @@ OPTIONS
     -h, --help
         Print this text.
 
-    -c, --config-file CONFIG_FILE
-        Specify the path of a tde configuration file. If this option is not
-        specified tde sources the optional '_default.conf' file followed by the
-        optional '<session-name>.conf' file from the configuration files
-        directory. See CONFIGURATION FILES.
-
     -f, --focus PANE
         Focus pane number PANE (1..PANES). The default value is 1.
 
@@ -75,20 +71,13 @@ OPTIONS
         The number of panes created in the tmux window. PANES is 1..9. This
         option value defaults to 1. See also the --columns option.
 
-    -t, --tmux-file TMUX_FILE
-        Specify the path of a file containing tmux commands. TMUX_FILE is
-        sourced and its commands executed immediately following tmux session
-        creation. If this option is not specified tde sources the optional
-        '_default.tmux' file followed by the optional '<session-name>.tmux' file
-        from the configuration files directory.
-
     -s, --session SESSION_NAME
         Specify the tmux session name. The --session option determines the
-        configuration file name, for example the '--session go-dev' command
-        option would set configuration file name to 'go-dev.conf'. The default
-        session name is 'tde'. SESSION_NAME must begin with an alpha numberic
-        character and can only contain only alphanumeric characters, dashes,
-        underscores, or periods.
+        configuration file names, for example the '--session monitor' option
+        would set configuration file names to 'monitor.tde' and 'monitor.tmux'.
+        The default session name is 'tde'. SESSION_NAME must begin with an alpha
+        numberic character and can only contain only alphanumeric characters,
+        dashes, underscores, or periods.
 
     -w, --window-name WINDOW_NAME
         The tmux window name. Defaults to the project directory's base name
@@ -104,23 +93,29 @@ OPTIONS
         Print tmux commands.
 
 CONFIGURATION FILES
+    Each session has two optional configuration files: '<session-name>.tde' and
+    '<session-name>.tmux'. The former contains tde project workspace window
+    definitions, the latter contains tmux commands.
+
+    The configuration files directory follows XDG Base Directory conventions:
+
+        ${XDG_CONFIG_HOME:-$HOME/.config}/tde/
+
+    Configuration files are executed at session creation, they are not
+    reexecuted if the session already exists.
+
     A tde configuration file specifies a set of project workspace windows, one
     per line, formatted like:
 
         [OPTION...] PROJECT_DIR
 
-    The following tde options are valid in configuration files: --focus,
+    The following tde options are valid in tde configuration files: --focus,
     --launch, --panes, --window-name, --columns. Omitted option values default
     to their command-line values.
 
     Blank lines and lines beginning with a '#' character are skipped.
 
-    The default configuration files directory follows XDG Base Directory
-    conventions:
-
-        ${XDG_CONFIG_HOME:-$HOME/.config}/tde/
-
-    The following example configuration file line creates a tmux window with
+    The following example tde configuration file line creates a tmux window with
     three panes in the ~/nixos-configurations working directory. The first pane
     runs nvim, the third pane runs lazygit:
 
@@ -132,4 +127,7 @@ CONFIGURATION FILES
     htop; the third runs iotop; the fourth runs nethogs:
 
         -x 3 -p 4 -l 2:htop -l '3:sudo iotop' -l '4:sudo nethogs' -w monitor ~
+
+    A tmux configuration file contains tmux commands which are applied to the
+    tde session (see the tmux man page for details).
 ```
