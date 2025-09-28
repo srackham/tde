@@ -404,7 +404,7 @@ validate_project_defs() {
     done
 }
 
-# Execute launch commands in specified panes
+# Execute a list of tab-separated <pane>:<command> launch commands
 execute_launch_commands() {
     local session_name="$1"
     local win_index="$2"
@@ -419,8 +419,8 @@ execute_launch_commands() {
             pane_num="${launch%%:*}"
             command="${launch#*:}"
         else
-            pane_num="1" # Default to pane 1
-            command="$launch"
+            write_error_msg "invalid --launch option '$launch'"
+            exit 1
         fi
         tmux_cmd send-keys -t "$session_name:$win_index.$pane_num" -l "$command"
         tmux_cmd send-keys -t "$session_name:$win_index.$pane_num" Enter
