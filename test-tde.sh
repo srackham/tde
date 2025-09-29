@@ -519,9 +519,22 @@ run_test "Help message (first two lines)" \
 
 TDE_CLIENT_COUNT=1
 TMUX=tde
-run_test "Just reattach to existing session if no project directory arguments are specified" \
+run_test "Executed inside tde session with no PROJECT_DIR arguments: nothing to do" \
     "./tde" \
-    "" 0
+    ""
+
+TDE_CLIENT_COUNT=1
+TMUX=
+run_test "Executed outside tde session with no PROJECT_DIR arguments" \
+    "./tde" \
+    "tde: warning: tmux session 'tde' is attached to 1 other client terminal
+tmux attach-session -t tde"
+
+TDE_CLIENT_COUNT=0
+TMUX=
+run_test "No PROJECT_DIR arguments spaces specified" \
+    "./tde" \
+    "tde: error: no project directory workspaces specified" 1
 
 # Tests for invalid command options
 TDE_CLIENT_COUNT=1
@@ -600,13 +613,6 @@ tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
 tde: warning: duplicate project workspace name: 'project1' exists in session 'tde', skipping
 tmux select-window -t tde:999"
-
-TDE_CLIENT_COUNT=0
-TMUX=tde
-# Tests for configuration file
-run_test "No project directories specified" \
-    "./tde" \
-    "tde: error: session does not exist: 'tde'" 1
 
 TDE_CLIENT_COUNT=0
 TMUX=tde
@@ -736,12 +742,6 @@ TMUX=tde
 run_test "Bad session name" \
     "./tde -s 'bad#session#name'" \
     "tde: error: invalid --session option 'bad#session#name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods" 1
-
-TDE_CLIENT_COUNT=0
-TMUX=tde
-run_test "--session option: missing configuration file warning" \
-    "./tde -s 'session-name'" \
-    "tde: error: session does not exist: 'session-name'" 1
 
 TMUX=
 TDE_CLIENT_COUNT=0

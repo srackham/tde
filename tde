@@ -498,9 +498,9 @@ done
 
 validate_project_defs
 
-if [[ ${#PROJECT_DEFS[@]} -eq 0 ]]; then
-    attach_session "$SESSION_NAME"
-    exit
+if [[ ${#PROJECT_DEFS[@]} -eq 0 ]] && ! session_exists "$SESSION_NAME"; then
+    write_error_msg "no project directory workspaces specified"
+    exit 1
 fi
 
 EXISTING_WINDOWS="$(existing_windows "$SESSION_NAME")"
