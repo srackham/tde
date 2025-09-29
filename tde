@@ -16,19 +16,20 @@ DESCRIPTION
     tmux windows. The number of tmux panes and optional launch commands can be
     specified per workspace window.
 
-    The project directory workspaces can be specified in configuration files or
-    with commnand-line arguments.
+    One or more project workspace windows can be specified in configuration
+    files or with command-line arguments. Workspace windows are assigned to a
+    named tmux session (see --session option).
 
     For each project workspace directory:
 
         1. A new tmux window is created (see --window-name option).
-        2. The window is split into columns (see --columns option).
-        3. If PANES is greater than COLUMNS then remaining panes are
-           stacked vertically in the right-hand column.
-        4. The focus pane is selected (see --focus option).
+        2. Any additional panes are created (see --panes option).
+        3. The window --layout option is applied.
+        4. The pane --launch options are applied.
+        5. The focus pane is selected (see --focus option).
 
-    The first newly created project window is selected and the session
-    is attached to the client terminal.
+    The first newly created workspace window is selected and the session is
+    attached to the client terminal.
 
 OPTIONS
      -n, --dry-run
@@ -46,27 +47,26 @@ OPTIONS
         PANE must be between 1 and the value specified by the --panes option.
         For example '3:lazyvim' executes the lazyvim command in pane 3.
 
+    -L, --layout LAYOUT
+        Assigns a tmux layout to project workspace windows. The default LAYOUT
+        value is `main-vertical`.
+
     -p,--panes PANES
         The number of panes created in the tmux window. PANES is 1..9. This
-        option value defaults to 1. See also the --columns option.
+        option value defaults to 1.
 
     -s, --session SESSION_NAME
         Specify the tmux session name. The --session option determines the
         configuration file names, for example the '--session monitor' option
         would set configuration file names to 'monitor.tde' and 'monitor.tmux'.
         The default session name is 'tde'. SESSION_NAME must begin with an alpha
-        numberic character and can only contain only alphanumeric characters,
+        numeric character and can only contain only alphanumeric characters,
         dashes, underscores, or periods.
 
     -w, --window-name WINDOW_NAME
         The tmux window name. Defaults to the project directory's base name
        minus its file name extension and with period characters
        replaced with hyphens.
-
-    -x, --columns COLUMNS
-        Split the tmux window into COLUMNS columns. COLUMNS is between 1 and
-        PANES. The default option value is 1 (if PANES=1) or 2 (if PANES is 2 or
-        greater).
 
     -v, --verbose
         Print tmux commands.
@@ -89,7 +89,7 @@ CONFIGURATION FILES
         [OPTION...] PROJECT_DIR
 
     The following tde options are valid in tde configuration files: --focus,
-    --launch, --panes, --window-name, --columns. Omitted option values default
+    --launch, --layout, --panes, --window-name. Omitted option values default
     to their command-line values.
 
     Blank lines and lines beginning with a '#' character are skipped.
@@ -100,15 +100,35 @@ CONFIGURATION FILES
 
         --panes 3 --launch 1:nvim --launch 3:lazygit ~/nixos-configurations
 
-    The next example creates a tmux window called 'monitor' with four panes
-    layed out in three columns: pane 1 in the first column; pane 2 in the
-    second; panes 3 and 4 in the third. The first is a terminal; the second runs
-    htop; the third runs iotop; the fourth runs nethogs:
+    The next example creates a tmux window called 'monitor' with three vertical
+    equal-width panes: pane 1 in the first column; pane 2 in the second; pane 3.
+    The first pane is a shell prompt; the second runs htop; the third runs
+    iotop:
 
-        -x 3 -p 4 -l 2:htop -l '3:sudo iotop' -l '4:sudo nethogs' -w monitor ~
+        -p 3 -l 2:htop -l '3:sudo iotop' -w monitor -L even-horizontal ~
 
     A tmux configuration file contains tmux commands which are applied to the
-    tde session (see the tmux man page for details).
+    workspace session (see the tmux man page for details).
+
+LAYOUTS
+    tmux preset or custom layouts can be applied to project workspace windows
+    with the --layout option (either on the command-line or in a tde
+    configuration file).
+
+    To create a custom tmux layout:
+
+        1. Create the desired layout manually e.g. using tmux split horizontal
+           (C-a %), split vertical (C-a "), spread panes evenly (C-a E) commands.
+        2. Run the `tmux list-windows -F "#{window_layout}"` command to generate
+           the custom layout; use this as the --layout option value.
+
+    tmux automatically adjusts the size of the layout for the current window
+    size.
+
+    Additional tmux layout-related options can be included in tde .tmux
+    configuration files.
+
+    tmux layouts are documented in the tmux man page.
 EOF
 }
 
