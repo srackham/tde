@@ -125,10 +125,10 @@ TDE_CONFIG_DIR="${TDE_CONFIG_DIR-}"
 DRY_RUN=
 VERBOSE=
 PANES=1
-COLS=
 FOCUS=1
 SESSION_NAME="tde"
 WINDOW_NAME=
+LAYOUT=main-vertical
 LAUNCH_OPTS=()
 PROJECT_DIRS=()
 
@@ -240,20 +240,20 @@ validate_focus() {
     fi
 }
 
-validate_columns() {
-    local cols
-    cols="$1"
-    if ! [[ "$cols" =~ ^[1-9]$ ]]; then
-        write_error_msg "invalid --columns option '$cols': must be between 1 and 9"
-        exit 1
-    fi
-}
-
 validate_session() {
     local name
     name="$1"
     if ! [[ "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.-]*$ ]]; then
         write_error_msg "invalid --session option '$name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods"
+        exit 1
+    fi
+}
+
+validate_layout() {
+    local layout
+    layout="$1"
+    if [[ -z "$layout" ]]; then
+        write_error_msg "invalid --layout option '$layout'"
         exit 1
     fi
 }
@@ -269,7 +269,7 @@ validate_window_name() {
 
 # Parses and validates command arguments and returns a '|' separated project defintion.
 # Each definition is formatted like:'
-# <focus>|<cols>|<panes>|<launches>|<dir>
+# <focus>|<panes>|<launches>|<dir>
 parse_project_def() {
     local line="$*"
     local args=()
@@ -279,7 +279,7 @@ parse_project_def() {
 
     local panes="$PANES"
     local focus="$FOCUS"
-    local cols="$COLS"
+    local layout="$LAYOUT"
     local window_name="$WINDOW_NAME"
     local launches=("${LAUNCH_OPTS[@]}")
     local dir=""
@@ -293,16 +293,16 @@ parse_project_def() {
             ;;
         -f | --focus)
             focus="${args[1]}"
-            validate_panes "$focus"
+            validate_focus "$focus"
             args=("${args[@]:2}")
             ;;
         -l | --launch)
             launches+=("${args[1]}")
             args=("${args[@]:2}")
             ;;
-        -x | --columns)
-            cols="${args[1]}"
-            validate_columns "$cols"
+        -L | --layout)
+            layout="${args[1]}"
+            validate_layout "$layout"
             args=("${args[@]:2}")
             ;;
         -w | --window-name)
@@ -321,14 +321,9 @@ parse_project_def() {
         esac
     done
 
-    if [[ "$panes" -eq 1 ]]; then
-        cols=${cols:-1}
-    else
-        cols=${cols:-2}
-    fi
     dir=$(eval echo "$dir") # Expand ~ and $HOME
 
-    PROJECT_DEFS+=("$focus|$window_name|$cols|$panes|$(
+    PROJECT_DEFS+=("$layout|$focus|$window_name|$panes|$(
         IFS=$'\t'
         echo "${launches[*]}"
     )|$dir")
@@ -359,7 +354,7 @@ window_index_by_name() {
 validate_project_defs() {
     for def in "${PROJECT_DEFS[@]}"; do
         # echo "def: $def"
-        IFS="|" read -r focus window_name cols panes launch_def dir <<<"$def"
+        IFS="|" read -r layout focus window_name panes launch_def dir <<<"$def"
 
         IFS=$'\t' read -ra launches <<<"$launch_def"
         for launch in "${launches[@]}"; do
@@ -383,11 +378,6 @@ validate_project_defs() {
 
         if ((focus > panes)); then
             write_error_msg "invalid --focus option '$focus': must be between 1 and $panes"
-            exit 1
-        fi
-
-        if ((cols > panes)); then
-            write_error_msg "invalid --columns option '$cols': must be between 1 and $panes"
             exit 1
         fi
 
@@ -448,14 +438,14 @@ while [[ $# -gt 0 ]]; do
         LAUNCH_OPTS+=("${2-}")
         shift 2
         ;;
+    -L | --layout)
+        validate_layout "${2-}"
+        LAYOUT="$2"
+        shift 2
+        ;;
     -s | --session)
         validate_session "${2-}"
         SESSION_NAME="$2"
-        shift 2
-        ;;
-    -x | --columns)
-        validate_columns "${2-}"
-        COLS="$2"
         shift 2
         ;;
     -w | --window-name)
@@ -519,7 +509,7 @@ EXISTING_WINDOWS="$(existing_windows "$SESSION_NAME")"
 FIRST_WIN_INDEX=""
 for index in "${!PROJECT_DEFS[@]}"; do
     def="${PROJECT_DEFS[$index]}"
-    IFS="|" read -r focus window_name cols panes launch_def dir <<<"$def"
+    IFS="|" read -r layout focus window_name panes launch_def dir <<<"$def"
     WIN_NAME="${window_name:-$(get_window_name "$dir")}"
     if ! session_exists "$SESSION_NAME"; then
         # Create session
@@ -545,17 +535,11 @@ for index in "${!PROJECT_DEFS[@]}"; do
     tmux_cmd set-option -t "$SESSION_NAME:$WIN_INDEX" pane-base-index 1
     FIRST_WIN_INDEX="${FIRST_WIN_INDEX:=$WIN_INDEX}"
 
-    if [[ $panes -gt 1 ]]; then
-        for ((i = cols - 1; i > 0; i--)); do
-            tmux_cmd split-window -h -t "$SESSION_NAME:$WIN_INDEX" -c "$dir" # Create pane to the right
-        done
-        for ((i = panes - cols; i > 0; i--)); do
-            tmux_cmd split-window -v -t "$SESSION_NAME:$WIN_INDEX" -c "$dir" # Create pane below
-        done
-        tmux_cmd select-layout -E -t "$SESSION_NAME:$WIN_INDEX.1"     # Equalise pane widths
-        tmux_cmd select-layout -E -t "$SESSION_NAME:$WIN_INDEX.$cols" # Equalise pane heights
-    fi
+    for ((i = panes; i > 1; i--)); do
+        tmux_cmd split-window -v -t "$SESSION_NAME:$WIN_INDEX" -c "$dir"
+    done
 
+    tmux_cmd select-layout -t "$SESSION_NAME:$WIN_INDEX" "$layout"
     execute_launch_commands "$SESSION_NAME" "$WIN_INDEX" "$launch_def"
     tmux_cmd select-pane -t "$SESSION_NAME:$WIN_INDEX.$focus"
     EXISTING_WINDOWS+=$'\n'"$WIN_NAME" # Update so subsequent checks are accurate
