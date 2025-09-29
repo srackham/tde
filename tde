@@ -207,6 +207,7 @@ attach_session() {
         exit 1
     fi
     if [[ $(current_session) == "$session_name" ]]; then # Do nothing
+        write_verbose_msg "skip attach session: session is already active: '$session_name'"
         return
     fi
     if [[ -z $TMUX ]]; then

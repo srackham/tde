@@ -137,7 +137,8 @@ run_test "--window-name option on command-line; verbose option" \
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
-tmux select-window -t tde:999"
+tmux select-window -t tde:999
+tde: info: skip attach session: session is already active: 'tde'"
 
 TDE_CLIENT_COUNT=1
 TMUX=tde
@@ -624,7 +625,8 @@ tde: info: tmux configuration file '/tmp/test-tde/.config/tde/tde.tmux' not foun
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
-tmux select-window -t tde:999" 0
+tmux select-window -t tde:999
+tde: info: skip attach session: session is already active: 'tde'"
 
 TDE_CLIENT_COUNT=0
 TMUX=tde
