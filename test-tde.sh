@@ -107,7 +107,7 @@ tmux attach-session -t tde"
 
 TDE_CLIENT_COUNT=0
 TMUX=
-run_test "Dry-run with 4 panes; session mysession" \
+run_test "4 panes; session mysession" \
     "./tde -p 4 -s mysession -w mywindow $PROJECT1" \
     "tmux new-session -d -s mysession -c /tmp/test-tde/project1 -n mywindow
 tmux set-option -t mysession:999 pane-base-index 1
@@ -134,15 +134,16 @@ TMUX=tde
 run_test "--window-name option on command-line; verbose option" \
     "./tde --verbose -w mywindow $PROJECT1" \
     "tmux new-window -t tde: -c /tmp/test-tde/project1 -n mywindow
+tde: info: tmux configuration file '/tmp/test-tde/.config/tde/tde.tmux' not found
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
-tde: info: skip attach session: session is already active: 'tde'"
+tde: info: skipping attachment: session 'tde' is already current"
 
 TDE_CLIENT_COUNT=1
 TMUX=tde
-run_test "Dry-run with 2 panes" \
+run_test "2 panes" \
     "./tde -p 2 $PROJECT1" \
     "tmux new-window -t tde: -c $PROJECT1 -n $(basename "$PROJECT1")
 tmux set-option -t tde:999 pane-base-index 1
@@ -153,7 +154,7 @@ tmux select-window -t tde:999"
 
 TDE_CLIENT_COUNT=1
 TMUX=tde
-run_test "Dry-run with 4 panes" \
+run_test "4 panes" \
     "./tde -p 4 $PROJECT1" \
     "tmux new-window -t tde: -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde:999 pane-base-index 1
@@ -166,7 +167,7 @@ tmux select-window -t tde:999"
 
 TDE_CLIENT_COUNT=1
 TMUX=tde
-run_test "Dry-run with 2 panes and explicit pane 1 launch command" \
+run_test "2 panes and explicit pane 1 launch command" \
     "./tde -p 2 -l 1:nvim $PROJECT1" \
     "tmux new-window -t tde: -c $PROJECT1 -n $(basename "$PROJECT1")
 tmux set-option -t tde:999 pane-base-index 1
@@ -179,7 +180,7 @@ tmux select-window -t tde:999"
 
 TDE_CLIENT_COUNT=1
 TMUX=tde
-run_test "Dry-run with 2 panes and implicit pane 1 launch command" \
+run_test "2 panes and implicit pane 1 launch command" \
     "./tde -p 2 -l 1:nvim $PROJECT1" \
     "tmux new-window -t tde: -c $PROJECT1 -n $(basename "$PROJECT1")
 tmux set-option -t tde:999 pane-base-index 1
@@ -206,19 +207,19 @@ tmux select-window -t tde:999"
 
 TDE_CLIENT_COUNT=1
 TMUX=tde
-run_test "Two project directories appended to current session each with 3 panes" \
-    "./tde -p 3 $PROJECT1 $PROJECT2" \
+run_test "Two project directories appended to current session each with 3 panes; --layout even-horizontal" \
+    "./tde -p 3 --layout even-horizontal $PROJECT1 $PROJECT2" \
     "tmux new-window -t tde: -c $PROJECT1 -n project1
 tmux set-option -t tde:999 pane-base-index 1
 tmux split-window -v -t tde:999 -c $PROJECT1
 tmux split-window -v -t tde:999 -c $PROJECT1
-tmux select-layout -t tde:999 main-vertical
+tmux select-layout -t tde:999 even-horizontal
 tmux select-pane -t tde:999.1
 tmux new-window -t tde: -c $PROJECT2 -n project2
 tmux set-option -t tde:999 pane-base-index 1
 tmux split-window -v -t tde:999 -c $PROJECT2
 tmux split-window -v -t tde:999 -c $PROJECT2
-tmux select-layout -t tde:999 main-vertical
+tmux select-layout -t tde:999 even-horizontal
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999"
 
@@ -612,7 +613,7 @@ run_test "Duplicate project directories arguments" \
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
-tde: warning: duplicate project workspace name: 'project1' exists in session 'tde', skipping
+tde: warning: skipping duplicate workspace name: 'project1'
 tmux select-window -t tde:999"
 
 TDE_CLIENT_COUNT=0
@@ -626,7 +627,7 @@ tmux set-option -t tde:999 pane-base-index 1
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
-tde: info: skip attach session: session is already active: 'tde'"
+tde: info: skipping attachment: session 'tde' is already current"
 
 TDE_CLIENT_COUNT=0
 TMUX=tde
@@ -636,7 +637,7 @@ run_test "Duplicate project workspace name" \
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
-tde: warning: duplicate project workspace name: 'project1' exists in session 'tde', skipping
+tde: warning: skipping duplicate workspace name: 'project1'
 tmux select-window -t tde:999"
 
 TDE_CLIENT_COUNT=0
@@ -680,7 +681,7 @@ tmux select-window -t tde:999" 0
 TDE_CLIENT_COUNT=0
 TMUX=tde
 write_conf tde.tde "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
---panes 3 --focus 2 --window-name mywindow --launch 1:nvim --launch 3:lazygit /tmp/test-tde/project2"
+-L even-horizontal --panes 3 --focus 2 --window-name mywindow --launch 1:nvim --launch 3:lazygit /tmp/test-tde/project2"
 run_test "Configuration file with two project directories and configuration options" \
     "./tde" \
     "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
@@ -696,7 +697,7 @@ tmux new-window -t tde: -c /tmp/test-tde/project2 -n mywindow
 tmux set-option -t tde:999 pane-base-index 1
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project2
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project2
-tmux select-layout -t tde:999 main-vertical
+tmux select-layout -t tde:999 even-horizontal
 tmux send-keys -t tde:999.1 -l nvim
 tmux send-keys -t tde:999.1 Enter
 tmux send-keys -t tde:999.3 -l lazygit
@@ -708,13 +709,13 @@ TDE_CLIENT_COUNT=0
 TMUX=tde
 write_conf tde.tde "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
 /tmp/test-tde/project2
---panes 3 --launch 1:nvim --launch 3:lazygit /tmp/test-tde/project3"
-run_test "Configuration file with three project directories, one is directory-only" \
-    "./tde --panes 4" \
+-L even-vertical --panes 3 --launch 1:nvim --launch 3:lazygit /tmp/test-tde/project3"
+run_test "Configuration file with three project directories; one is directory-only; --layout command-line option" \
+    "./tde --panes 4 --layout even-horizontal" \
     "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde:999 pane-base-index 1
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project1
-tmux select-layout -t tde:999 main-vertical
+tmux select-layout -t tde:999 even-horizontal
 tmux send-keys -t tde:999.1 -l nvim
 tmux send-keys -t tde:999.1 Enter
 tmux send-keys -t tde:999.2 -l git status
@@ -725,13 +726,13 @@ tmux set-option -t tde:999 pane-base-index 1
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project2
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project2
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project2
-tmux select-layout -t tde:999 main-vertical
+tmux select-layout -t tde:999 even-horizontal
 tmux select-pane -t tde:999.1
 tmux new-window -t tde: -c /tmp/test-tde/project3 -n project3
 tmux set-option -t tde:999 pane-base-index 1
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project3
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project3
-tmux select-layout -t tde:999 main-vertical
+tmux select-layout -t tde:999 even-vertical
 tmux send-keys -t tde:999.1 -l nvim
 tmux send-keys -t tde:999.1 Enter
 tmux send-keys -t tde:999.3 -l lazygit
