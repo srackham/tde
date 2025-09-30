@@ -766,7 +766,7 @@ write_conf session-name.tmux ""
 run_test "Single-entry configuration file; nested session warning" \
     "./tde -s 'session-name'" \
     "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
-tmux source-file -t session-name: /tmp/test-tde/.config/tde/session-name.tmux
+tmux source-file -t session-name:999 /tmp/test-tde/.config/tde/session-name.tmux
 tmux set-option -t session-name:999 pane-base-index 1
 tmux select-layout -t session-name:999 main-vertical
 tmux select-pane -t session-name:999.1

@@ -547,15 +547,17 @@ for index in "${!PROJECT_DEFS[@]}"; do
         fi
         tmux_cmd new-window -t "$SESSION_NAME:" -c "$dir" -n "$WIN_NAME"
     fi
-    # Source and execute optional tmux configuration file
+
+    WIN_INDEX="$(window_index_by_name "$SESSION_NAME" "$WIN_NAME")"
+
+    # Source and execute optional tmux window configuration file
     tmux_file="$conf_dir/${SESSION_NAME}.tmux"
     if [[ -f "$tmux_file" ]]; then
-        tmux_cmd source-file -t "$SESSION_NAME:" "$tmux_file"
+        tmux_cmd source-file -t "$SESSION_NAME:$WIN_INDEX" "$tmux_file"
     else
         write_verbose_msg "tmux configuration file '$tmux_file' not found"
     fi
 
-    WIN_INDEX="$(window_index_by_name "$SESSION_NAME" "$WIN_NAME")"
     tmux_cmd set-option -t "$SESSION_NAME:$WIN_INDEX" pane-base-index 1
     FIRST_WIN_INDEX="${FIRST_WIN_INDEX:=$WIN_INDEX}"
 
