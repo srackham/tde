@@ -45,9 +45,10 @@ DESCRIPTION
 
         1. A new tmux window is created (see --window-name option).
         2. Any additional panes are created (see --panes option).
-        3. The window --layout option is applied.
-        4. The pane --launch options are applied.
-        5. The focus pane is selected (see --focus option).
+        3. The <session-name>.tmux file is sourced.
+        4. The window --layout option is applied.
+        5. The pane --launch options are applied.
+        6. The focus pane is selected (see --focus option).
 
     The first newly created workspace window is selected and the session is
     attached to the client terminal.
@@ -101,11 +102,12 @@ CONFIGURATION FILES
 
         ${XDG_CONFIG_HOME:-$HOME/.config}/tde/
 
-    Configuration files are executed at session creation, they are not
-    reexecuted if the session already exists.
+    <session-name>.tde files are sourced at session creation.
+    <session-name>.tmux files contain tmux commands which are sourced at window
+    creation.
 
-    A tde configuration file specifies a set of project workspace windows, one
-    per line, formatted like:
+    A <session-name.tde configuration file specifies a set of project workspace
+    windows, one per line, formatted like:
 
         [OPTION...] PROJECT_DIR
 
@@ -115,9 +117,9 @@ CONFIGURATION FILES
 
     Blank lines and lines beginning with a '#' character are skipped.
 
-    The following example tde configuration file line creates a tmux window with
-    three panes in the ~/nixos-configurations working directory. The first pane
-    runs nvim, the third pane runs lazygit:
+    The following example <session-name>.tde configuration file line creates a
+    tmux window with three panes in the ~/nixos-configurations working
+    directory. The first pane runs nvim, the third pane runs lazygit:
 
         --panes 3 --launch 1:nvim --launch 3:lazygit ~/nixos-configurations
 
@@ -127,9 +129,6 @@ CONFIGURATION FILES
     iotop:
 
         -p 3 -l 2:htop -l '3:sudo iotop' -w monitor -L even-horizontal ~
-
-    A tmux configuration file contains tmux commands which are applied to the
-    workspace session (see the tmux man page for details).
 
 LAYOUTS
     tmux preset or custom layouts can be applied to project workspace windows
