@@ -32,6 +32,9 @@ DESCRIPTION
     The first newly created workspace window is selected and the session is
     attached to the client terminal.
 
+    Explicit command-line options take precedence over configuration file
+    options.
+
 OPTIONS
      -n, --dry-run
         Print tmux commands without doing anything. '999' is a dummy value for
@@ -70,7 +73,7 @@ OPTIONS
        replaced with hyphens.
 
     -v, --verbose
-        Print tmux commands.
+        Print informational messages and tmux commands.
 
 CONFIGURATION FILES
     Each session has two optional configuration files: '<session-name>.tde' and
