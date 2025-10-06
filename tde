@@ -495,7 +495,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [[ $TDE_TEST == true ]]; then
+if [[ -n "$TDE_CONFIG_DIR" ]]; then
     conf_dir="${TDE_CONFIG_DIR}"
 else
     conf_dir="${XDG_CONFIG_HOME:-$HOME/.config/tde}"

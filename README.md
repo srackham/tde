@@ -152,4 +152,8 @@ LAYOUTS
     configuration files.
 
     tmux layouts are documented in the tmux man page.
+
+ENVIRONMENT VARIABLES
+    TDE_CONFIG_DIR
+        The configuration files directory.
 ```
