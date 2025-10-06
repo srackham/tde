@@ -115,8 +115,13 @@ CONFIGURATION FILES
         [OPTION...] PROJECT_DIR
 
     The following tde options are valid in tde configuration files: --focus,
-    --launch, --layout, --panes, --window-name. Omitted option values default
-    to their command-line values.
+    --launch, --layout, --panes, --session, --window. Omitted option values
+    default to their command-line values.
+
+    Use the --session option to switch between sessions within a
+    <session-name>.tde file. Entries containing a --session option change the
+    default session name for subsequent entries up until the next --session
+    option is encountered.
 
     Blank lines and lines beginning with a '#' character are skipped.
 

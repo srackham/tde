@@ -786,4 +786,39 @@ tmux select-pane -t session-name:999.1
 tmux select-window -t session-name:999
 tmux attach-session -t session-name"
 
+TMUX=
+TDE_CLIENT_COUNT=0
+write_conf session-name.tde "--session session-one --window-name one --panes 3 /tmp
+--session session-two --window-name two --panes 3 /tmp
+--session session-one --window-name three --panes 3 /tmp
+--session session-two --window-name four --panes 3 /tmp"
+run_test "Multiple interweaved session in single session config file" \
+    "./tde --session session-name" \
+    "tmux new-session -d -s session-one -c /tmp -n one
+tmux set-option -t session-one:999 pane-base-index 1
+tmux split-window -v -t session-one:999 -c /tmp
+tmux split-window -v -t session-one:999 -c /tmp
+tmux select-layout -t session-one:999 main-vertical
+tmux select-pane -t session-one:999.1
+tmux new-window -t session-two: -c /tmp -n two
+tmux set-option -t session-two:999 pane-base-index 1
+tmux split-window -v -t session-two:999 -c /tmp
+tmux split-window -v -t session-two:999 -c /tmp
+tmux select-layout -t session-two:999 main-vertical
+tmux select-pane -t session-two:999.1
+tmux new-window -t session-one: -c /tmp -n three
+tmux set-option -t session-one:999 pane-base-index 1
+tmux split-window -v -t session-one:999 -c /tmp
+tmux split-window -v -t session-one:999 -c /tmp
+tmux select-layout -t session-one:999 main-vertical
+tmux select-pane -t session-one:999.1
+tmux new-window -t session-two: -c /tmp -n four
+tmux set-option -t session-two:999 pane-base-index 1
+tmux split-window -v -t session-two:999 -c /tmp
+tmux split-window -v -t session-two:999 -c /tmp
+tmux select-layout -t session-two:999 main-vertical
+tmux select-pane -t session-two:999.1
+tmux select-window -t session-two:999
+tmux attach-session -t session-two"
+
 exit

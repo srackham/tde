@@ -302,6 +302,7 @@ parse_project_def() {
 
     local panes="$PANES"
     local focus="$FOCUS"
+    local session=""
     local layout="$LAYOUT"
     local window_name="$WINDOW_NAME"
     local launches=("${LAUNCH_OPTS[@]}")
@@ -328,6 +329,13 @@ parse_project_def() {
             validate_layout "$layout"
             args=("${args[@]:2}")
             ;;
+        -s | --session)
+            session="${args[1]}"
+            if [[ -n "$session" ]]; then
+                validate_session "$session"
+            fi
+            args=("${args[@]:2}")
+            ;;
         -w | --window-name)
             window_name="${args[1]}"
             validate_window_name "$window_name"
@@ -346,7 +354,7 @@ parse_project_def() {
 
     dir=$(eval echo "$dir") # Expand ~ and $HOME
 
-    PROJECT_DEFS+=("$layout|$focus|$window_name|$panes|$(
+    PROJECT_DEFS+=("$session|$layout|$focus|$window_name|$panes|$(
         IFS=$'\t'
         echo "${launches[*]}"
     )|$dir")
@@ -377,7 +385,7 @@ window_index_by_name() {
 validate_project_defs() {
     for def in "${PROJECT_DEFS[@]}"; do
         # echo "def: $def"
-        IFS="|" read -r layout focus window_name panes launch_def dir <<<"$def"
+        IFS="|" read -r session layout focus window_name panes launch_def dir <<<"$def"
 
         IFS=$'\t' read -ra launches <<<"$launch_def"
         for launch in "${launches[@]}"; do
@@ -532,7 +540,10 @@ EXISTING_WINDOWS="$(existing_windows "$SESSION_NAME")"
 FIRST_WIN_INDEX=""
 for index in "${!PROJECT_DEFS[@]}"; do
     def="${PROJECT_DEFS[$index]}"
-    IFS="|" read -r layout focus window_name panes launch_def dir <<<"$def"
+    IFS="|" read -r session layout focus window_name panes launch_def dir <<<"$def"
+    if [[ -n "$session" ]]; then
+        SESSION_NAME="$session"
+    fi
     WIN_NAME="${window_name:-$(get_window_name "$dir")}"
     if ! session_exists "$SESSION_NAME"; then
         # Create session
