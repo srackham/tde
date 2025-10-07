@@ -39,7 +39,7 @@ DESCRIPTION
 
     One or more project workspace windows can be specified in configuration
     files or with command-line arguments. Workspace windows are assigned to a
-    named tmux session (see --session option).
+    named tmux session (see --session-name option).
 
     For each project workspace directory:
 
@@ -80,9 +80,9 @@ OPTIONS
         The number of panes created in the tmux window. PANES is 1..9. This
         option value defaults to 1.
 
-    -s, --session SESSION_NAME
-        Specify the tmux session name. The --session option determines the
-        configuration file names, for example the '--session monitor' option
+    -s, --session-name SESSION_NAME
+        Specify the tmux session name. The --session-name option determines the
+        configuration file names, for example the '--session-name monitor' option
         would set configuration file names to 'monitor.tde' and 'monitor.tmux'.
         The default session name is 'tde'. SESSION_NAME must begin with an alpha
         numeric character and can only contain only alphanumeric characters,
@@ -115,12 +115,12 @@ CONFIGURATION FILES
         [OPTION...] PROJECT_DIR
 
     The following tde options are valid in tde configuration files: --focus,
-    --launch, --layout, --panes, --session, --window. Omitted option values
+    --launch, --layout, --panes, --session-name, --window. Omitted option values
     default to their command-line values.
 
-    Use the --session option to switch between sessions within a
-    <session-name>.tde file. Entries containing a --session option change the
-    default session name for subsequent entries up until the next --session
+    Use the --session-name option to switch between sessions within a
+    <session-name>.tde file. Entries containing a --session-name option change the
+    default session name for subsequent entries up until the next --session-name
     option is encountered.
 
     Blank lines and lines beginning with a '#' character are skipped.

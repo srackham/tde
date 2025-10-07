@@ -18,7 +18,7 @@ DESCRIPTION
 
     One or more project workspace windows can be specified in configuration
     files or with command-line arguments. Workspace windows are assigned to a
-    named tmux session (see --session option).
+    named tmux session (see --session-name option).
 
     For each project workspace directory:
 
@@ -59,9 +59,9 @@ OPTIONS
         The number of panes created in the tmux window. PANES is 1..9. This
         option value defaults to 1.
 
-    -s, --session SESSION_NAME
-        Specify the tmux session name. The --session option determines the
-        configuration file names, for example the '--session monitor' option
+    -s, --session-name SESSION_NAME
+        Specify the tmux session name. The --session-name option determines the
+        configuration file names, for example the '--session-name monitor' option
         would set configuration file names to 'monitor.tde' and 'monitor.tmux'.
         The default session name is 'tde'. SESSION_NAME must begin with an alpha
         numeric character and can only contain only alphanumeric characters,
@@ -263,11 +263,11 @@ validate_focus() {
     fi
 }
 
-validate_session() {
+validate_session_name() {
     local name
     name="$1"
     if ! [[ "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.-]*$ ]]; then
-        write_error_msg "invalid --session option '$name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods"
+        write_error_msg "invalid --session-name option '$name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods"
         exit 1
     fi
 }
@@ -329,10 +329,10 @@ parse_project_def() {
             validate_layout "$layout"
             args=("${args[@]:2}")
             ;;
-        -s | --session)
+        -s | --session-name)
             session="${args[1]}"
             if [[ -n "$session" ]]; then
-                validate_session "$session"
+                validate_session_name "$session"
             fi
             args=("${args[@]:2}")
             ;;
@@ -474,8 +474,8 @@ while [[ $# -gt 0 ]]; do
         LAYOUT="$2"
         shift 2
         ;;
-    -s | --session)
-        validate_session "${2-}"
+    -s | --session-name)
+        validate_session_name "${2-}"
         SESSION_NAME="$2"
         shift 2
         ;;
