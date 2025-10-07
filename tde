@@ -538,16 +538,19 @@ EXISTING_WINDOWS="$(existing_windows "$SESSION_NAME")"
 
 # Create project workspace windows
 FIRST_WIN_INDEX=""
+session_name="$SESSION_NAME"
 for index in "${!PROJECT_DEFS[@]}"; do
     def="${PROJECT_DEFS[$index]}"
     IFS="|" read -r session layout focus window_name panes launch_def dir <<<"$def"
     if [[ -n "$session" ]]; then
-        SESSION_NAME="$session"
+        session_name="$session"
+    else
+        session_name="$SESSION_NAME"
     fi
     WIN_NAME="${window_name:-$(get_window_name "$dir")}"
-    if ! session_exists "$SESSION_NAME"; then
+    if ! session_exists "$session_name"; then
         # Create session
-        tmux_cmd new-session -d -s "$SESSION_NAME" -c "$dir" -n "$WIN_NAME"
+        tmux_cmd new-session -d -s "$session_name" -c "$dir" -n "$WIN_NAME"
         if [[ -n "$DRY_RUN" || $TDE_TEST == true ]]; then
             TDE_SESSION_CREATED=true # So the session is not created again
         fi
@@ -556,34 +559,34 @@ for index in "${!PROJECT_DEFS[@]}"; do
             write_warning_msg "skipping duplicate workspace name: '$WIN_NAME'"
             continue
         fi
-        tmux_cmd new-window -t "$SESSION_NAME:" -c "$dir" -n "$WIN_NAME"
+        tmux_cmd new-window -t "$session_name:" -c "$dir" -n "$WIN_NAME"
     fi
 
-    WIN_INDEX="$(window_index_by_name "$SESSION_NAME" "$WIN_NAME")"
+    WIN_INDEX="$(window_index_by_name "$session_name" "$WIN_NAME")"
 
     # Source and execute optional tmux window configuration file
-    tmux_file="$conf_dir/${SESSION_NAME}.tmux"
+    tmux_file="$conf_dir/${session_name}.tmux"
     if [[ -f "$tmux_file" ]]; then
-        tmux_cmd source-file -t "$SESSION_NAME:$WIN_INDEX" "$tmux_file"
+        tmux_cmd source-file -t "$session_name:$WIN_INDEX" "$tmux_file"
     else
         write_verbose_msg "tmux configuration file '$tmux_file' not found"
     fi
 
-    tmux_cmd set-option -t "$SESSION_NAME:$WIN_INDEX" pane-base-index 1
+    tmux_cmd set-option -t "$session_name:$WIN_INDEX" pane-base-index 1
     FIRST_WIN_INDEX="${FIRST_WIN_INDEX:=$WIN_INDEX}"
 
     for ((i = panes; i > 1; i--)); do
-        tmux_cmd split-window -v -t "$SESSION_NAME:$WIN_INDEX" -c "$dir"
+        tmux_cmd split-window -v -t "$session_name:$WIN_INDEX" -c "$dir"
     done
 
-    tmux_cmd select-layout -t "$SESSION_NAME:$WIN_INDEX" "$layout"
-    execute_launch_commands "$SESSION_NAME" "$WIN_INDEX" "$launch_def"
-    tmux_cmd select-pane -t "$SESSION_NAME:$WIN_INDEX.$focus"
+    tmux_cmd select-layout -t "$session_name:$WIN_INDEX" "$layout"
+    execute_launch_commands "$session_name" "$WIN_INDEX" "$launch_def"
+    tmux_cmd select-pane -t "$session_name:$WIN_INDEX.$focus"
     EXISTING_WINDOWS+=$'\n'"$WIN_NAME" # Update so subsequent checks are accurate
 done
 
 if [[ -n "$FIRST_WIN_INDEX" ]]; then
-    tmux_cmd select-window -t "$SESSION_NAME:$FIRST_WIN_INDEX"
+    tmux_cmd select-window -t "$session_name:$FIRST_WIN_INDEX"
 fi
 
-attach_session "$SESSION_NAME"
+attach_session "$session_name"

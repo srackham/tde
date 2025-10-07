@@ -109,7 +109,7 @@ CONFIGURATION FILES
     <session-name>.tmux files contain tmux commands which are sourced at window
     creation.
 
-    A <session-name.tde configuration file specifies a set of project workspace
+    A <session-name>.tde configuration file specifies a set of project workspace
     windows, one per line, formatted like:
 
         [OPTION...] PROJECT_DIR
@@ -118,10 +118,8 @@ CONFIGURATION FILES
     --launch, --layout, --panes, --session-name, --window. Omitted option values
     default to their command-line values.
 
-    Use the --session-name option to switch between sessions within a
-    <session-name>.tde file. Entries containing a --session-name option change the
-    default session name for subsequent entries up until the next --session-name
-    option is encountered.
+    The --session-name option can be used to create windows in other sessions;
+    the session will be created if does not exist.
 
     Blank lines and lines beginning with a '#' character are skipped.
 
