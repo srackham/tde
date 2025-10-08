@@ -561,19 +561,30 @@ TDE_CLIENT_COUNT=1
 TMUX=tde
 run_test "Invalid --launch pane number '0'" \
     "./tde -p 2 -l 0:ls $PROJECT1" \
-    "tde: error: invalid --launch option pane number '0': must be between 1 and 2" 1
-
-TDE_CLIENT_COUNT=1
-TMUX=tde
-run_test "Invalid --launch pane number (too high)" \
-    "./tde -p 2 -l 3:ls $PROJECT1" \
-    "tde: error: invalid --launch option pane number '3': must be between 1 and 2" 1
+    "tde: error: invalid --launch option '0:ls': pane number must be between 1 and 9" 1
 
 TDE_CLIENT_COUNT=1
 TMUX=tde
 run_test "Invalid --launch pane number (non-numeric)" \
     "./tde -p 2 -l x:ls $PROJECT1" \
-    "tde: error: invalid --launch option pane number 'x': must be between 1 and 2" 1
+    "tde: error: invalid --launch option 'x:ls': pane number must be between 1 and 9" 1
+
+TDE_CLIENT_COUNT=1
+TMUX=tde
+run_test "Number of panes set by launch option" \
+    "./tde -l 3:ls -v $PROJECT1" \
+    "tde: info: number of panes increased to 3 to accomodate launch options: '3:ls'
+tmux new-window -t tde: -c /tmp/test-tde/project1 -n project1
+tde: info: tmux configuration file '/tmp/test-tde/.config/tde/tde.tmux' not found
+tmux set-option -t tde:999 pane-base-index 1
+tmux split-window -v -t tde:999 -c /tmp/test-tde/project1
+tmux split-window -v -t tde:999 -c /tmp/test-tde/project1
+tmux select-layout -t tde:999 main-vertical
+tmux send-keys -t tde:999.3 -l ls
+tmux send-keys -t tde:999.3 Enter
+tmux select-pane -t tde:999.1
+tmux select-window -t tde:999
+tde: info: skipping attachment: session 'tde' is already current"
 
 TDE_CLIENT_COUNT=1
 TMUX=tde

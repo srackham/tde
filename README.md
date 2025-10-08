@@ -77,8 +77,16 @@ OPTIONS
         value is `main-vertical`.
 
     -p,--panes PANES
-        The number of panes created in the tmux window. PANES is 1..9. This
-        option value defaults to 1.
+        The minimum number of panes created in the tmux window. PANES is 1..9.
+        This option value defaults to 1. The actual number of panes is either
+        PANES or the maximum --launch options PANE number, whichever is greater.
+        For example, the following sets of options will all generate three-pane
+        windows:
+
+            --launch 3:ls
+            --panes 3
+            --panes 2 --launch 3:ls
+            --panes 3 --launch 1:nvim
 
     -s, --session-name SESSION_NAME
         Specify the tmux session name. The --session-name option determines the
