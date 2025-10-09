@@ -628,6 +628,19 @@ tde: warning: skipping duplicate window name: 'project1'
 tmux select-window -t tde:999"
 
 TDE_CLIENT_COUNT=0
+TMUX=
+run_test "Duplicate --launch option pane number" \
+    "./tde --launch 1:nvim -l 1:lazygit $PROJECT1" \
+    "tde: error: duplicate pane number 1 in --launch options: '1:nvim, 1:lazygit'" 1
+
+TDE_CLIENT_COUNT=0
+TMUX=
+write_conf tde.tde "--launch 1:nvim /tmp/test-tde/project1"
+run_test "Duplicate --launch option pane number in configuration file" \
+    "./tde -l 1:lazygit $PROJECT1" \
+    "tde: error: duplicate pane number 1 in --launch options: '1:lazygit, 1:nvim'" 1
+
+TDE_CLIENT_COUNT=0
 TMUX=tde
 write_conf tde.tde "/tmp/test-tde/project1"
 run_test "Configuration file with single directory-only entry; verbose" \

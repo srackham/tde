@@ -421,16 +421,16 @@ window_index_by_name() {
 }
 
 # The calculated number of panes is returned by reference in the second argument.
-validate_launch_def() {
-    local launch_def="$1"
+validate_launch_defs() {
+    local launch_defs="$1"
     local -n max_pane="$2"
+    local panes=()
+    local pane_num
+    local command
 
-    IFS=$'\t' read -ra launches <<<"$launch_def"
+    IFS=$'\t' read -ra launches <<<"$launch_defs"
     max_pane=1
     for launch in "${launches[@]}"; do
-
-        local pane_num
-        local command
 
         if [[ "$launch" != *:* ]]; then
             write_error_msg "invalid --launch option '$launch'"
@@ -445,6 +445,14 @@ validate_launch_def() {
             exit 1
         fi
 
+        for n in "${panes[@]}"; do
+            if [[ $n -eq $pane_num ]]; then
+                write_error_msg "duplicate pane number $pane_num in --launch options: '${launch_defs//$'\t'/, }'"
+                exit 1
+            fi
+        done
+        panes+=("$pane_num")
+
         if ((pane_num > max_pane)); then
             max_pane=$pane_num
         fi
@@ -456,10 +464,10 @@ validate_launch_def() {
 validate_project_defs() {
     for def in "${PROJECT_DEFS[@]}"; do
 
-        IFS="|" read -r session tmux_cmds layout focus window_name panes launch_def dir <<<"$def"
+        IFS="|" read -r session tmux_cmds layout focus window_name panes launch_defs dir <<<"$def"
 
         local _=
-        validate_launch_def "$launch_def" _
+        validate_launch_defs "$launch_defs" _
 
         if ((focus > panes)); then
             write_error_msg "invalid --focus option '$focus': must be between 1 and $panes"
@@ -600,7 +608,7 @@ FIRST_WIN_INDEX=""
 session_name="$SESSION_NAME"
 for index in "${!PROJECT_DEFS[@]}"; do
     def="${PROJECT_DEFS[$index]}"
-    IFS="|" read -r session tmux_cmds layout focus window_name panes launch_def dir <<<"$def"
+    IFS="|" read -r session tmux_cmds layout focus window_name panes launch_defs dir <<<"$def"
 
     if [[ -n "$session" ]]; then
         session_name="$session"
@@ -614,11 +622,11 @@ for index in "${!PROJECT_DEFS[@]}"; do
         tmux_commands="$tmux_cmds"
     fi
 
-    validate_launch_def "$launch_def" max_launch_pane
+    validate_launch_defs "$launch_defs" max_launch_pane
     # shellcheck disable=SC2154
     if ((max_launch_pane > panes)); then
         panes=$max_launch_pane
-        write_verbose_msg "number of panes increased to $max_launch_pane to accomodate launch options: '${launch_def//$'\t'/, }'"
+        write_verbose_msg "number of panes increased to $max_launch_pane to accomodate launch options: '${launch_defs//$'\t'/, }'"
     fi
 
     WIN_NAME="${window_name:-$(get_window_name "$dir")}"
@@ -660,7 +668,7 @@ for index in "${!PROJECT_DEFS[@]}"; do
     done
 
     tmux_cmd select-layout -t "$session_name:$WIN_INDEX" "$layout"
-    execute_launch_commands "$session_name" "$WIN_INDEX" "$launch_def"
+    execute_launch_commands "$session_name" "$WIN_INDEX" "$launch_defs"
     tmux_cmd select-pane -t "$session_name:$WIN_INDEX.$focus"
     EXISTING_WINDOWS+=$'\n'"$WIN_NAME" # Update so subsequent checks are accurate
 done
