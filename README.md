@@ -53,9 +53,6 @@ DESCRIPTION
     The first newly created workspace window is selected and the session is
     attached to the client terminal.
 
-    Explicit command-line options take precedence over configuration file
-    options.
-
 OPTIONS
      -n, --dry-run
         Print tmux commands without doing anything. '999' is a dummy value for
@@ -96,38 +93,44 @@ OPTIONS
         numeric character and can only contain only alphanumeric characters,
         dashes, underscores, or periods.
 
+    -t, --tmux-commands TMUX_COMMANDS
+        Set the per window tmux commands configuration file to
+        TMUX_COMMANDS.tmux (see TMUX COMMANDS FILES). TMUX_COMMANDS must begin
+        with an alpha numeric character and can only contain only alphanumeric
+        characters, dashes, underscores, or periods.
+
     -w, --window-name WINDOW_NAME
         The tmux window name. Defaults to the project directory's base name
-       minus its file name extension and with period characters
-       replaced with hyphens.
+        minus its file name extension and with period characters replaced with
+        hyphens.
 
     -v, --verbose
         Print informational messages and tmux commands.
 
 CONFIGURATION FILES
-    Each session has two optional configuration files: '<session-name>.tde' and
-    '<session-name>.tmux'. The former contains tde project workspace window
+    Configuration files are optional. The configuration files default directory
+    location is $HOME/.config/tde/. A custom configuration files directory can
+    be specified with the TDE_CONFIG_DIR environment variable
+
+    There are two types of configuration files: session configuration files and
+    tmux command files. The former contains tde project workspace window
     definitions, the latter contains tmux commands.
 
-    The configuration files directory follows XDG Base Directory conventions:
+SESSION CONFIGURATION FILES
+    Session configuration files are named '<session-name>.tde' and are sourced
+    at session creation.
 
-        ${XDG_CONFIG_HOME:-$HOME/.config}/tde/
-
-    <session-name>.tde files are sourced at session creation.
-    <session-name>.tmux files contain tmux commands which are sourced at window
-    creation.
-
-    A <session-name>.tde configuration file specifies a set of project workspace
-    windows, one per line, formatted like:
+    A session configuration file specifies a set of project workspace windows,
+    one per line, formatted like:
 
         [OPTION...] PROJECT_DIR
 
     The following tde options are valid in tde configuration files: --focus,
-    --launch, --layout, --panes, --session-name, --window. Omitted option values
-    default to their command-line values.
+    --launch, --layout, --panes, --session-name, --tmux-commands, --window-name.
+    Omitted option values default to their command-line values.
 
-    The --session-name option can be used to create windows in other sessions;
-    the session will be created if does not exist.
+    The --session-name option can be used to create windows in other sessions
+    (both new and existing).
 
     Blank lines and lines beginning with a '#' character are skipped.
 
@@ -143,6 +146,13 @@ CONFIGURATION FILES
     iotop:
 
         -p 3 -l 2:htop -l '3:sudo iotop' -w monitor -L even-horizontal ~
+
+TMUX COMMAND FILES
+    tmux command files contain tmux commands and are named '<session-name>.tmux',
+    though this can be overridden using the --tmux-commands option.
+
+    tmux command files are sourced with the tmux 'source-file' command when a
+    window is created (see the tmux(1) man page).
 
 LAYOUTS
     tmux preset or custom layouts can be applied to project workspace windows
@@ -163,8 +173,4 @@ LAYOUTS
     configuration files.
 
     tmux layouts are documented in the tmux man page.
-
-ENVIRONMENT VARIABLES
-    TDE_CONFIG_DIR
-        The configuration files directory.
 ```

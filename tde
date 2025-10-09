@@ -32,9 +32,6 @@ DESCRIPTION
     The first newly created workspace window is selected and the session is
     attached to the client terminal.
 
-    Explicit command-line options take precedence over configuration file
-    options.
-
 OPTIONS
      -n, --dry-run
         Print tmux commands without doing anything. '999' is a dummy value for
@@ -56,8 +53,16 @@ OPTIONS
         value is `main-vertical`.
 
     -p,--panes PANES
-        The number of panes created in the tmux window. PANES is 1..9. This
-        option value defaults to 1.
+        The minimum number of panes created in the tmux window. PANES is 1..9.
+        This option value defaults to 1. The actual number of panes is either
+        PANES or the maximum --launch options PANE number, whichever is greater.
+        For example, the following sets of options will all generate three-pane
+        windows:
+
+            --launch 3:ls
+            --panes 3
+            --panes 2 --launch 3:ls
+            --panes 3 --launch 1:nvim
 
     -s, --session-name SESSION_NAME
         Specify the tmux session name. The --session-name option determines the
@@ -67,35 +72,44 @@ OPTIONS
         numeric character and can only contain only alphanumeric characters,
         dashes, underscores, or periods.
 
+    -t, --tmux-commands TMUX_COMMANDS
+        Set the per window tmux commands configuration file to
+        TMUX_COMMANDS.tmux (see TMUX COMMANDS FILES). TMUX_COMMANDS must begin
+        with an alpha numeric character and can only contain only alphanumeric
+        characters, dashes, underscores, or periods.
+
     -w, --window-name WINDOW_NAME
         The tmux window name. Defaults to the project directory's base name
-       minus its file name extension and with period characters
-       replaced with hyphens.
+        minus its file name extension and with period characters replaced with
+        hyphens.
 
     -v, --verbose
         Print informational messages and tmux commands.
 
 CONFIGURATION FILES
-    Each session has two optional configuration files: '<session-name>.tde' and
-    '<session-name>.tmux'. The former contains tde project workspace window
+    Configuration files are optional. The configuration files default directory
+    location is $HOME/.config/tde/. A custom configuration files directory can
+    be specified with the TDE_CONFIG_DIR environment variable
+
+    There are two types of configuration files: session configuration files and
+    tmux command files. The former contains tde project workspace window
     definitions, the latter contains tmux commands.
 
-    The configuration files directory follows XDG Base Directory conventions:
+SESSION CONFIGURATION FILES
+    Session configuration files are named '<session-name>.tde' and are sourced
+    at session creation.
 
-        ${XDG_CONFIG_HOME:-$HOME/.config}/tde/
-
-    <session-name>.tde files are sourced at session creation.
-    <session-name>.tmux files contain tmux commands which are sourced at window
-    creation.
-
-    A <session-name.tde configuration file specifies a set of project workspace
-    windows, one per line, formatted like:
+    A session configuration file specifies a set of project workspace windows,
+    one per line, formatted like:
 
         [OPTION...] PROJECT_DIR
 
     The following tde options are valid in tde configuration files: --focus,
-    --launch, --layout, --panes, --window-name. Omitted option values default
-    to their command-line values.
+    --launch, --layout, --panes, --session-name, --tmux-commands, --window-name.
+    Omitted option values default to their command-line values.
+
+    The --session-name option can be used to create windows in other sessions
+    (both new and existing).
 
     Blank lines and lines beginning with a '#' character are skipped.
 
@@ -111,6 +125,13 @@ CONFIGURATION FILES
     iotop:
 
         -p 3 -l 2:htop -l '3:sudo iotop' -w monitor -L even-horizontal ~
+
+TMUX COMMAND FILES
+    tmux command files contain tmux commands and are named '<session-name>.tmux',
+    though this can be overridden using the --tmux-commands option.
+
+    tmux command files are sourced with the tmux 'source-file' command when a
+    window is created (see the tmux(1) man page).
 
 LAYOUTS
     tmux preset or custom layouts can be applied to project workspace windows
@@ -149,6 +170,7 @@ VERBOSE=
 PANES=1
 FOCUS=1
 SESSION_NAME="tde"
+TMUX_COMMANDS=
 WINDOW_NAME=
 LAYOUT=main-vertical
 LAUNCH_OPTS=()
@@ -272,6 +294,15 @@ validate_session_name() {
     fi
 }
 
+validate_tmux_commands_name() {
+    local name
+    name="$1"
+    if ! [[ "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.-]*$ ]]; then
+        write_error_msg "invalid --tmux-commands option '$name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods"
+        exit 1
+    fi
+}
+
 validate_layout() {
     local layout
     layout="$1"
@@ -303,6 +334,7 @@ parse_project_def() {
     local panes="$PANES"
     local focus="$FOCUS"
     local session=""
+    local tmux_cmds=""
     local layout="$LAYOUT"
     local window_name="$WINDOW_NAME"
     local launches=("${LAUNCH_OPTS[@]}")
@@ -336,6 +368,13 @@ parse_project_def() {
             fi
             args=("${args[@]:2}")
             ;;
+        -t | --tmux-commands)
+            tmux_cmds="${args[1]}"
+            if [[ -n "$tmux_cmds" ]]; then
+                validate_tmux_commands_name "$tmux_cmds"
+            fi
+            args=("${args[@]:2}")
+            ;;
         -w | --window-name)
             window_name="${args[1]}"
             validate_window_name "$window_name"
@@ -354,7 +393,7 @@ parse_project_def() {
 
     dir=$(eval echo "$dir") # Expand ~ and $HOME
 
-    PROJECT_DEFS+=("$session|$layout|$focus|$window_name|$panes|$(
+    PROJECT_DEFS+=("$session|$tmux_cmds|$layout|$focus|$window_name|$panes|$(
         IFS=$'\t'
         echo "${launches[*]}"
     )|$dir")
@@ -417,7 +456,7 @@ validate_launch_def() {
 validate_project_defs() {
     for def in "${PROJECT_DEFS[@]}"; do
 
-        IFS="|" read -r session layout focus window_name panes launch_def dir <<<"$def"
+        IFS="|" read -r session tmux_cmds layout focus window_name panes launch_def dir <<<"$def"
 
         local _=
         validate_launch_def "$launch_def" _
@@ -494,6 +533,11 @@ while [[ $# -gt 0 ]]; do
         SESSION_NAME="$2"
         shift 2
         ;;
+    -t | --tmux-commands)
+        validate_tmux_commands_name "${2-}"
+        TMUX_COMMANDS="$2"
+        shift 2
+        ;;
     -w | --window-name)
         validate_window_name "${2-}"
         WINDOW_NAME="$2"
@@ -545,7 +589,7 @@ done
 validate_project_defs
 
 if [[ ${#PROJECT_DEFS[@]} -eq 0 ]] && ! session_exists "$SESSION_NAME"; then
-    write_error_msg "no project directory workspaces specified"
+    write_error_msg "no project directories specified"
     exit 1
 fi
 
@@ -556,12 +600,18 @@ FIRST_WIN_INDEX=""
 session_name="$SESSION_NAME"
 for index in "${!PROJECT_DEFS[@]}"; do
     def="${PROJECT_DEFS[$index]}"
-    IFS="|" read -r session layout focus window_name panes launch_def dir <<<"$def"
+    IFS="|" read -r session tmux_cmds layout focus window_name panes launch_def dir <<<"$def"
 
     if [[ -n "$session" ]]; then
         session_name="$session"
+        tmux_commands="$session"
     else
         session_name="$SESSION_NAME"
+        tmux_commands="${TMUX_COMMANDS:-$SESSION_NAME}"
+    fi
+
+    if [[ -n "$tmux_cmds" ]]; then
+        tmux_commands="$tmux_cmds"
     fi
 
     validate_launch_def "$launch_def" max_launch_pane
@@ -580,24 +630,30 @@ for index in "${!PROJECT_DEFS[@]}"; do
         fi
     else
         if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
-            write_warning_msg "skipping duplicate workspace name: '$WIN_NAME'"
+            write_warning_msg "skipping duplicate window name: '$WIN_NAME'"
             continue
         fi
         tmux_cmd new-window -t "$session_name:" -c "$dir" -n "$WIN_NAME"
     fi
 
     WIN_INDEX="$(window_index_by_name "$session_name" "$WIN_NAME")"
+    FIRST_WIN_INDEX="${FIRST_WIN_INDEX:=$WIN_INDEX}"
+
+    tmux_cmd set-option -t "$session_name:$WIN_INDEX" pane-base-index 1
 
     # Source and execute optional tmux window configuration file
-    tmux_file="$conf_dir/${session_name}.tmux"
+    tmux_file="$conf_dir/${tmux_commands}.tmux"
     if [[ -f "$tmux_file" ]]; then
         tmux_cmd source-file -t "$session_name:$WIN_INDEX" "$tmux_file"
     else
-        write_verbose_msg "tmux configuration file '$tmux_file' not found"
+        if [[ -n "$TMUX_COMMANDS" || -n "$tmux_cmds" ]]; then
+            # --tmux-commands was used explicitly so we expect to find the tmux command file.
+            write_error_msg "tmux commands file '$tmux_file' not found"
+            exit 1
+        else
+            write_verbose_msg "tmux commands file '$tmux_file' not found"
+        fi
     fi
-
-    tmux_cmd set-option -t "$session_name:$WIN_INDEX" pane-base-index 1
-    FIRST_WIN_INDEX="${FIRST_WIN_INDEX:=$WIN_INDEX}"
 
     for ((i = panes; i > 1; i--)); do
         tmux_cmd split-window -v -t "$session_name:$WIN_INDEX" -c "$dir"
