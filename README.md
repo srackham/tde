@@ -132,6 +132,10 @@ SESSION CONFIGURATION FILES
     The --session-name option can be used to create windows in other sessions
     (both new and existing).
 
+    Default option values can be assigned by setting PROJECT_DIR to '-'. The
+    option values in lines with PROJECT_DIR set to '-' become the new default option
+    values for subsequently created windows.
+
     Blank lines and lines beginning with a '#' character are skipped.
 
     The following example <session-name>.tde configuration file line creates a

@@ -111,6 +111,10 @@ SESSION CONFIGURATION FILES
     The --session-name option can be used to create windows in other sessions
     (both new and existing).
 
+    Default option values can be assigned by setting PROJECT_DIR to '-'. The
+    option values in lines with PROJECT_DIR set to '-' become the new default option
+    values for subsequently created windows.
+
     Blank lines and lines beginning with a '#' character are skipped.
 
     The following example <session-name>.tde configuration file line creates a
@@ -331,13 +335,13 @@ parse_project_def() {
     # Re-parse line into proper words with quotes honored
     eval "args=($line)"
 
-    local panes="$PANES"
-    local focus="$FOCUS"
+    local panes=""
+    local focus=""
     local session=""
     local tmux_cmds=""
-    local layout="$LAYOUT"
-    local window_name="$WINDOW_NAME"
-    local launches=("${LAUNCH_OPTS[@]}")
+    local layout=""
+    local window_name=""
+    local launches=()
     local dir=""
 
     while [[ ${#args[@]} -gt 0 ]]; do
@@ -380,11 +384,15 @@ parse_project_def() {
             validate_window_name "$window_name"
             args=("${args[@]:2}")
             ;;
-        -*)
+        -?*)
             write_error_msg "unknown option in project definition: ${args[0]}"
             exit 1
             ;;
         *)
+            if [[ -n "$dir" ]]; then
+                write_error_msg "unknown option in project definition: '$dir'"
+                exit 1
+            fi
             dir="$(eval echo "${args[0]}")"
             args=("${args[@]:1}")
             ;;
@@ -422,11 +430,13 @@ window_index_by_name() {
 
 # The calculated number of panes is returned by reference in the second argument.
 validate_launch_defs() {
-    local launch_defs="$1"
+    local launch_defs="$1" # A tab-separated list of launch option values
     local -n max_pane="$2"
     local panes=()
     local pane_num
     local command
+    local launches
+    local launch
 
     IFS=$'\t' read -ra launches <<<"$launch_defs"
     max_pane=1
@@ -462,24 +472,21 @@ validate_launch_defs() {
 
 # Validate PROJECT_DEFS array of command arguments
 validate_project_defs() {
+    local def
     for def in "${PROJECT_DEFS[@]}"; do
 
+        local session tmux_cmds layout focus window_name panes launch_defs dir
         IFS="|" read -r session tmux_cmds layout focus window_name panes launch_defs dir <<<"$def"
 
         local _=
         validate_launch_defs "$launch_defs" _
-
-        if ((focus > panes)); then
-            write_error_msg "invalid --focus option '$focus': must be between 1 and $panes"
-            exit 1
-        fi
 
         if [[ -z "$dir" ]]; then
             write_error_msg "missing project directory: '$dir'"
             exit 1
         fi
 
-        if [[ ! -d "$dir" ]]; then
+        if [[ "$dir" != "-" && ! -d "$dir" ]]; then
             write_error_msg "project directory not found: '$dir'"
             exit 1
         fi
@@ -493,7 +500,9 @@ execute_launch_commands() {
     local win_index="$2"
     local launch_def="$3"
 
+    local launches=()
     IFS=$'\t' read -ra launches <<<"$launch_def"
+    local launch
     for launch in "${launches[@]}"; do
         local pane_num
         local command
@@ -610,6 +619,29 @@ for index in "${!PROJECT_DEFS[@]}"; do
     def="${PROJECT_DEFS[$index]}"
     IFS="|" read -r session tmux_cmds layout focus window_name panes launch_defs dir <<<"$def"
 
+    if [[ "$dir" == "-" ]]; then
+        if [[ -n "$layout" ]]; then
+            LAYOUT="$layout"
+        fi
+        if [[ -n "$window_name" ]]; then
+            WINDOW_NAME="$window_name"
+        fi
+        if [[ -n "$panes" ]]; then
+            PANES="$panes"
+        fi
+        if [[ -n "$focus" ]]; then
+            FOCUS="$focus"
+        fi
+        if [[ -n "$launch_defs" ]]; then
+            IFS=$'\t' read -ra LAUNCH_OPTS <<<"$launch_defs"
+        fi
+        continue
+    fi
+    layout="${layout:-$LAYOUT}"
+    window_name="${window_name:-$WINDOW_NAME}"
+    focus="${focus:-$FOCUS}"
+    panes="${panes:-$PANES}"
+
     if [[ -n "$session" ]]; then
         session_name="$session"
         tmux_commands="$session"
@@ -622,11 +654,23 @@ for index in "${!PROJECT_DEFS[@]}"; do
         tmux_commands="$tmux_cmds"
     fi
 
+    if [[ -z "$launch_defs" ]]; then
+        # Use command-line options in lieu of explicit launch defs
+        save_ifs="$IFS"
+        IFS=$'\t' launch_defs="${LAUNCH_OPTS[*]}" # Save/restore IFS beause it is executed in the current shell
+        IFS="$save_ifs"
+    fi
+
     validate_launch_defs "$launch_defs" max_launch_pane
     # shellcheck disable=SC2154
     if ((max_launch_pane > panes)); then
         panes=$max_launch_pane
         write_verbose_msg "number of panes increased to $max_launch_pane to accomodate launch options: '${launch_defs//$'\t'/, }'"
+    fi
+
+    if ((focus > panes)); then
+        write_error_msg "invalid --focus option '$focus': must be between 1 and $panes"
+        exit 1
     fi
 
     WIN_NAME="${window_name:-$(get_window_name "$dir")}"

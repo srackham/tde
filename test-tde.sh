@@ -635,10 +635,17 @@ run_test "Duplicate --launch option pane number" \
 
 TDE_CLIENT_COUNT=0
 TMUX=
-write_conf tde.tde "--launch 1:nvim /tmp/test-tde/project1"
+write_conf tde.tde "--launch 1:nvim -l 1:lazygit /tmp/test-tde/project1"
 run_test "Duplicate --launch option pane number in configuration file" \
     "./tde -l 1:lazygit $PROJECT1" \
-    "tde: error: duplicate pane number 1 in --launch options: '1:lazygit, 1:nvim'" 1
+    "tde: error: duplicate pane number 1 in --launch options: '1:nvim, 1:lazygit'" 1
+
+TDE_CLIENT_COUNT=0
+TMUX=
+write_conf tde.tde "--launch 1:nvim 3:lazygit -"
+run_test "Invalid option 3:lazygit; missing --launch option name" \
+    "./tde $PROJECT1" \
+    "tde: error: unknown option in project definition: '3:lazygit'" 1
 
 TDE_CLIENT_COUNT=0
 TMUX=tde
@@ -762,6 +769,44 @@ tmux send-keys -t tde:999.1 Enter
 tmux send-keys -t tde:999.3 -l lazygit
 tmux send-keys -t tde:999.3 Enter
 tmux select-pane -t tde:999.1
+tmux select-window -t tde:999" 0
+
+TDE_CLIENT_COUNT=0
+TMUX=tde
+write_conf tde.tde "-l 1:nvim -l '2:git status' -p 2 /tmp/test-tde/project1
+-L even-horizontal --panes 4 --focus 2 --window-name mywindow --launch 4:nvim --launch 3:lazygit -
+/tmp/test-tde/project2
+-w mywindow-two -p 3 --launch 2:nvim /tmp/test-tde/project3"
+run_test "Configuration file with three entries, the second is a default '-' entry" \
+    "./tde" \
+    "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux set-option -t tde:999 pane-base-index 1
+tmux split-window -v -t tde:999 -c /tmp/test-tde/project1
+tmux select-layout -t tde:999 main-vertical
+tmux send-keys -t tde:999.1 -l nvim
+tmux send-keys -t tde:999.1 Enter
+tmux send-keys -t tde:999.2 -l git status
+tmux send-keys -t tde:999.2 Enter
+tmux select-pane -t tde:999.1
+tmux new-window -t tde: -c /tmp/test-tde/project2 -n mywindow
+tmux set-option -t tde:999 pane-base-index 1
+tmux split-window -v -t tde:999 -c /tmp/test-tde/project2
+tmux split-window -v -t tde:999 -c /tmp/test-tde/project2
+tmux split-window -v -t tde:999 -c /tmp/test-tde/project2
+tmux select-layout -t tde:999 even-horizontal
+tmux send-keys -t tde:999.4 -l nvim
+tmux send-keys -t tde:999.4 Enter
+tmux send-keys -t tde:999.3 -l lazygit
+tmux send-keys -t tde:999.3 Enter
+tmux select-pane -t tde:999.2
+tmux new-window -t tde: -c /tmp/test-tde/project3 -n mywindow-two
+tmux set-option -t tde:999 pane-base-index 1
+tmux split-window -v -t tde:999 -c /tmp/test-tde/project3
+tmux split-window -v -t tde:999 -c /tmp/test-tde/project3
+tmux select-layout -t tde:999 even-horizontal
+tmux send-keys -t tde:999.2 -l nvim
+tmux send-keys -t tde:999.2 Enter
+tmux select-pane -t tde:999.2
 tmux select-window -t tde:999" 0
 
 TDE_CLIENT_COUNT=0
