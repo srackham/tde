@@ -178,3 +178,8 @@ LAYOUTS
 
     tmux layouts are documented in the tmux man page.
 ```
+
+## Tips
+
+- Use the shell `clear` command to create a null launch option, this is handy if you want to override the default launch options, for example, `--launch 1:clear`.
+- Use the tmux `run-shell` to run shell commands synchronously from tmux command files.
