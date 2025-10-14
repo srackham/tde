@@ -1,16 +1,11 @@
 # vim: set filetype=tmux:
-#
-# monitor session customisation (see ~/.config/tde/monitor.conf)
-# 256 terminal colors: https://robotmoon.com/256-colors/
-#
 
-# See X11 color names: https://www.w3schools.com/colors/default.asp
-# 256 terminal colors: https://robotmoon.com/256-colors/
+# tde theme file
 
 # Set pane styles
 set-option pane-border-lines heavy
-set-option pane-border-style fg=gray       # vivid pink border
-set-option pane-active-border-style fg=hotpink # active border in red
+set-option pane-border-style fg=gray
+set-option pane-active-border-style fg=hotpink
 
 # Format status line
 set-option status-left "#[bg=pink,fg=black,bold] #{pane_index} "

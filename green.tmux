@@ -1,9 +1,6 @@
 # vim: set filetype=tmux:
 
-# tde default theme
-
-# Layout options
-set-option main-pane-width 50%
+# tde theme file
 
 # Set pane styles
 set-option pane-border-lines heavy
