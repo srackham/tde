@@ -818,8 +818,8 @@ run_test "Bad session name" \
 TDE_CLIENT_COUNT=0
 TMUX=tde
 run_test "Bad tmux commands name" \
-    "./tde -t 'bad#tmux-commands#name'" \
-    "tde: error: invalid --tmux-commands option 'bad#tmux-commands#name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods" 1
+    "./tde -t 'bad#theme#name'" \
+    "tde: error: invalid --theme option 'bad#theme#name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods" 1
 
 TDE_CLIENT_COUNT=0
 TMUX=tde
@@ -873,10 +873,10 @@ TMUX=
 TDE_CLIENT_COUNT=0
 write_conf session-default.tde "--session-name session-one --window-name one --panes 3 /tmp
 --session-name session-two --window-name two --panes 3 /tmp
---window-name default --panes 3 --tmux-commands tmux-commands /tmp
+--window-name default --panes 3 --theme theme /tmp
 --session-name session-one --window-name three --panes 3 /tmp
 --session-name session-two --window-name four --panes 3 /tmp"
-write_conf tmux-commands.tmux ""
+write_conf theme.tmux ""
 run_test "Multiple interweaved session in single session config file" \
     "./tde --session-name session-default" \
     "tmux new-session -d -s session-one -c /tmp -n one
@@ -893,7 +893,7 @@ tmux select-layout -t session-two:999 main-vertical
 tmux select-pane -t session-two:999.1
 tmux new-window -t session-default: -c /tmp -n default
 tmux set-option -t session-default:999 pane-base-index 1
-tmux source-file -t session-default:999 /tmp/test-tde/.config/tde/tmux-commands.tmux
+tmux source-file -t session-default:999 /tmp/test-tde/.config/tde/theme.tmux
 tmux split-window -v -t session-default:999 -c /tmp
 tmux split-window -v -t session-default:999 -c /tmp
 tmux select-layout -t session-default:999 main-vertical

@@ -1,12 +1,12 @@
 # tde
 
-A simple tmux-based text IDE.
+A tmux-based workspace-centric text windows manager.
 
 ## Installation
 
 Install [tmux](https://github.com/tmux/tmux/) if it is not already installed.
 
-Download `tde` and the default tmux commands file:
+Download `tde` and the default theme file:
 
 ```bash
 mkdir -p ~/.local/bin
@@ -14,8 +14,6 @@ curl -L -o ~/.local/bin/tde https://raw.githubusercontent.com/srackham/tde/main/
 chmod +x ~/.local/bin/tde
 mkdir -p ~/.config/tde
 curl -L -o ~/.config/tde/tde.tmux https://raw.githubusercontent.com/srackham/tde/main/tde.tmux
-curl -L -o ~/.config/tde/monitor.tmux https://raw.githubusercontent.com/srackham/tde/main/monitor.tmux
-curl -L -o ~/.config/tde/monitor.tde https://raw.githubusercontent.com/srackham/tde/main/monitor.tde
 ```
 
 ## Examples
@@ -26,7 +24,7 @@ TODO:
 
 ```
 NAME
-    tde - open project workspaces with tmux
+    tde - open workspaces with tmux
 
 SYNOPSIS
 
@@ -93,9 +91,9 @@ OPTIONS
         numeric character and can only contain only alphanumeric characters,
         dashes, underscores, or periods.
 
-    -t, --tmux-commands TMUX_COMMANDS
+    -t, --theme THEME
         Set the per window tmux commands configuration file to
-        TMUX_COMMANDS.tmux (see TMUX COMMANDS FILES). TMUX_COMMANDS must begin
+        THEME.tmux (see TMUX COMMANDS FILES). THEME must begin
         with an alpha numeric character and can only contain only alphanumeric
         characters, dashes, underscores, or periods.
 
@@ -113,7 +111,7 @@ CONFIGURATION FILES
     be specified with the TDE_CONFIG_DIR environment variable
 
     There are two types of configuration files: session configuration files and
-    tmux command files. The former contains tde project workspace window
+    theme files. The former contains tde project workspace window
     definitions, the latter contains tmux commands.
 
 SESSION CONFIGURATION FILES
@@ -126,7 +124,7 @@ SESSION CONFIGURATION FILES
         [OPTION...] PROJECT_DIR
 
     The following tde options are valid in tde configuration files: --focus,
-    --launch, --layout, --panes, --session-name, --tmux-commands, --window-name.
+    --launch, --layout, --panes, --session-name, --theme, --window-name.
     Omitted option values default to their command-line values.
 
     The --session-name option can be used to create windows in other sessions
@@ -151,11 +149,11 @@ SESSION CONFIGURATION FILES
 
         -p 3 -l 2:htop -l '3:sudo iotop' -w monitor -L even-horizontal ~
 
-TMUX COMMAND FILES
-    tmux command files contain tmux commands and are named '<session-name>.tmux',
-    though this can be overridden using the --tmux-commands option.
+THEME FILES
+    Theme files contain tmux commands and are named '<session-name>.tmux',
+    though this can be overridden using the --theme option.
 
-    tmux command files are sourced with the tmux 'source-file' command when a
+    Theme files are sourced with the tmux 'source-file' command when a
     window is created (see the tmux(1) man page).
 
 LAYOUTS
@@ -181,5 +179,6 @@ LAYOUTS
 
 ## Tips
 
+- Sessions can be built from multiple session configuration files using the same `--session` option.
 - Use the shell `clear` command to create a null launch option, this is handy if you want to override the default launch options, for example, `--launch 1:clear`.
-- Use the tmux `run-shell` to run shell commands synchronously from tmux command files.
+- Use the tmux `run-shell` to run shell commands synchronously from theme files.
