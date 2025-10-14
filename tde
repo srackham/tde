@@ -589,12 +589,13 @@ if ! session_exists "$SESSION_NAME"; then
     # Read, parse and validate config file and append to PROJECT_DEFS
     conf_file="$conf_dir/${SESSION_NAME}.tde"
     if [[ -f "$conf_file" ]]; then
+        write_verbose_msg "reading session configuration file '$conf_file'"
         while IFS= read -r line; do
             [[ -z "$line" || "$line" =~ ^# ]] && continue
             parse_project_def "$line"
         done <"$conf_file"
     else
-        write_verbose_msg "tde configuration file '$conf_file' not found"
+        write_verbose_msg "session configuration file '$conf_file' not found"
     fi
 fi
 
