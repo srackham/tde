@@ -16,6 +16,9 @@ set-option window-status-current-style bg=crimson,fg=white,bold
 set-option window-status-format " #W:#I "
 set-option window-status-current-format " #W:#I "
 
+set message-style "bg=pink,fg=black,bold"
+set mode-style "bg=pink,fg=black,bold"
+
 set-hook after-new-window {
   set-option window-status-current-style 'bg=crimson,fg=white,bold'
   set-option window-status-format ' #W:#I '
