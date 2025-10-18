@@ -19,9 +19,6 @@ set-option window-status-current-style bg=color190,fg=black,bold
 set-option window-status-format " #W:#I "
 set-option window-status-current-format " #W:#I "
 
-set message-style "bg=color227,fg=black,bold"
-set mode-style "bg=color227,fg=black,bold"
-
 set-hook after-new-window {
   set-option window-status-current-style bg=color190,fg=black,bold
   set-option window-status-format ' #W:#I '
