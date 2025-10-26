@@ -517,7 +517,7 @@ TMUX=tde
 run_test "Help message (first two lines)" \
     "./tde --help | head -n 2" \
     "NAME
-    tde - open project workspaces with tmux"
+    tde - open workspaces with tmux"
 
 TDE_CLIENT_COUNT=1
 TMUX=tde
@@ -652,7 +652,8 @@ TMUX=tde
 write_conf tde.tde "/tmp/test-tde/project1"
 run_test "Configuration file with single directory-only entry; verbose" \
     "./tde --verbose" \
-    "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+    "tde: info: reading session configuration file '/tmp/test-tde/.config/tde/tde.tde'
+tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde:999 pane-base-index 1
 tde: info: tmux commands file '/tmp/test-tde/.config/tde/tde.tmux' not found
 tmux select-layout -t tde:999 main-vertical
@@ -833,7 +834,7 @@ TMUX=
 TDE_CLIENT_COUNT=0
 run_test "Missing session configuration file warning; refusing attachment; one project directory argument; --verbose" \
     "./tde -s 'session-name-2' --verbose '$PROJECT1'" \
-    "tde: info: tde configuration file '/tmp/test-tde/.config/tde/session-name-2.tde' not found
+    "tde: info: session configuration file '/tmp/test-tde/.config/tde/session-name-2.tde' not found
 tmux new-session -d -s session-name-2 -c /tmp/test-tde/project1 -n project1
 tmux set-option -t session-name-2:999 pane-base-index 1
 tde: info: tmux commands file '/tmp/test-tde/.config/tde/session-name-2.tmux' not found
