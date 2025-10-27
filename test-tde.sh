@@ -129,13 +129,14 @@ tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999"
 
-TDE_CLIENT_COUNT=1
+TDE_CLIENT_COUNT=0
 TMUX=tde
 run_test "--window-name option on command-line; verbose option" \
     "./tde --verbose -w mywindow $PROJECT1" \
-    "tmux new-window -t tde: -c /tmp/test-tde/project1 -n mywindow
-tmux set-option -t tde:999 pane-base-index 1
+    "tde: info: session configuration file '/tmp/test-tde/.config/tde/tde.tde' not found
+tmux new-session -d -s tde -c /tmp/test-tde/project1 -n mywindow
 tde: info: tmux commands file '/tmp/test-tde/.config/tde/tde.tmux' not found
+tmux set-option -t tde:999 pane-base-index 1
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
@@ -576,7 +577,6 @@ run_test "Number of panes set by launch option" \
     "tde: info: number of panes increased to 3 to accomodate launch options: '3:ls'
 tmux new-window -t tde: -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde:999 pane-base-index 1
-tde: info: tmux commands file '/tmp/test-tde/.config/tde/tde.tmux' not found
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project1
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project1
 tmux select-layout -t tde:999 main-vertical
@@ -654,8 +654,8 @@ run_test "Configuration file with single directory-only entry; verbose" \
     "./tde --verbose" \
     "tde: info: reading session configuration file '/tmp/test-tde/.config/tde/tde.tde'
 tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
-tmux set-option -t tde:999 pane-base-index 1
 tde: info: tmux commands file '/tmp/test-tde/.config/tde/tde.tmux' not found
+tmux set-option -t tde:999 pane-base-index 1
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
@@ -827,7 +827,6 @@ TMUX=tde
 run_test "Missing tmux commands file" \
     "./tde -t non-existent" \
     "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
-tmux set-option -t tde:999 pane-base-index 1
 tde: error: tmux commands file '/tmp/test-tde/.config/tde/non-existent.tmux' not found" 1
 
 TMUX=
@@ -836,8 +835,8 @@ run_test "Missing session configuration file warning; refusing attachment; one p
     "./tde -s 'session-name-2' --verbose '$PROJECT1'" \
     "tde: info: session configuration file '/tmp/test-tde/.config/tde/session-name-2.tde' not found
 tmux new-session -d -s session-name-2 -c /tmp/test-tde/project1 -n project1
-tmux set-option -t session-name-2:999 pane-base-index 1
 tde: info: tmux commands file '/tmp/test-tde/.config/tde/session-name-2.tmux' not found
+tmux set-option -t session-name-2:999 pane-base-index 1
 tmux select-layout -t session-name-2:999 main-vertical
 tmux select-pane -t session-name-2:999.1
 tmux select-window -t session-name-2:999
@@ -850,8 +849,8 @@ write_conf session-name.tmux ""
 run_test "Single-entry configuration file; nested session warning" \
     "./tde -s 'session-name'" \
     "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
+tmux source-file -t session-name /tmp/test-tde/.config/tde/session-name.tmux
 tmux set-option -t session-name:999 pane-base-index 1
-tmux source-file -t session-name:999 /tmp/test-tde/.config/tde/session-name.tmux
 tmux select-layout -t session-name:999 main-vertical
 tmux select-pane -t session-name:999.1
 tmux select-window -t session-name:999
@@ -873,12 +872,12 @@ tmux attach-session -t session-name"
 TMUX=
 TDE_CLIENT_COUNT=0
 write_conf session-default.tde "--session-name session-one --window-name one --panes 3 /tmp
---session-name session-two --window-name two --panes 3 /tmp
---window-name default --panes 3 --theme theme /tmp
+--session-name session-two --theme theme --window-name two --panes 3 /tmp
+--window-name default --panes 3 /tmp
 --session-name session-one --window-name three --panes 3 /tmp
 --session-name session-two --window-name four --panes 3 /tmp"
 write_conf theme.tmux ""
-run_test "Multiple interweaved session in single session config file" \
+run_test "Multiple interweaved sessions in single session config file" \
     "./tde --session-name session-default" \
     "tmux new-session -d -s session-one -c /tmp -n one
 tmux set-option -t session-one:999 pane-base-index 1
@@ -886,7 +885,7 @@ tmux split-window -v -t session-one:999 -c /tmp
 tmux split-window -v -t session-one:999 -c /tmp
 tmux select-layout -t session-one:999 main-vertical
 tmux select-pane -t session-one:999.1
-tmux new-window -t session-two: -c /tmp -n two
+tmux new-session -d -s session-two -c /tmp -n two
 tmux set-option -t session-two:999 pane-base-index 1
 tmux split-window -v -t session-two:999 -c /tmp
 tmux split-window -v -t session-two:999 -c /tmp
@@ -894,7 +893,6 @@ tmux select-layout -t session-two:999 main-vertical
 tmux select-pane -t session-two:999.1
 tmux new-window -t session-default: -c /tmp -n default
 tmux set-option -t session-default:999 pane-base-index 1
-tmux source-file -t session-default:999 /tmp/test-tde/.config/tde/theme.tmux
 tmux split-window -v -t session-default:999 -c /tmp
 tmux split-window -v -t session-default:999 -c /tmp
 tmux select-layout -t session-default:999 main-vertical

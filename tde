@@ -681,6 +681,19 @@ for index in "${!PROJECT_DEFS[@]}"; do
         if [[ -n "$DRY_RUN" || $TDE_TEST == true ]]; then
             TDE_SESSION_CREATED=true # So the session is not created again
         fi
+        # Source and execute optional tmux window configuration file
+        tmux_file="$conf_dir/${theme}.tmux"
+        if [[ -f "$tmux_file" ]]; then
+            tmux_cmd source-file -t "$session_name" "$tmux_file"
+        else
+            if [[ -n "$THEME" || -n "$tmux_cmds" ]]; then
+                # --theme was used explicitly so we expect to find the tmux command file.
+                write_error_msg "tmux commands file '$tmux_file' not found"
+                exit 1
+            else
+                write_verbose_msg "tmux commands file '$tmux_file' not found"
+            fi
+        fi
     else
         if grep -Fxq "$WIN_NAME" <<<"$EXISTING_WINDOWS"; then
             write_warning_msg "skipping duplicate window name: '$WIN_NAME'"
@@ -693,20 +706,6 @@ for index in "${!PROJECT_DEFS[@]}"; do
     FIRST_WIN_INDEX="${FIRST_WIN_INDEX:=$WIN_INDEX}"
 
     tmux_cmd set-option -t "$session_name:$WIN_INDEX" pane-base-index 1
-
-    # Source and execute optional tmux window configuration file
-    tmux_file="$conf_dir/${theme}.tmux"
-    if [[ -f "$tmux_file" ]]; then
-        tmux_cmd source-file -t "$session_name:$WIN_INDEX" "$tmux_file"
-    else
-        if [[ -n "$THEME" || -n "$tmux_cmds" ]]; then
-            # --theme was used explicitly so we expect to find the tmux command file.
-            write_error_msg "tmux commands file '$tmux_file' not found"
-            exit 1
-        else
-            write_verbose_msg "tmux commands file '$tmux_file' not found"
-        fi
-    fi
 
     for ((i = panes; i > 1; i--)); do
         tmux_cmd split-window -v -t "$session_name:$WIN_INDEX" -c "$dir"
