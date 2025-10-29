@@ -164,13 +164,13 @@ TMUX="${TMUX-}"
 
 # Environment variables used for testing
 TDE_TEST="${TDE_TEST-false}"
-TDE_CLIENT_COUNT="${TDE_CLIENT_COUNT-0}"
-TDE_SESSION_CREATED=false
-TDE_CONFIG_DIR="${TDE_CONFIG_DIR-}"
+TDE_CURRENT_SESSION="${TDE_CURRENT_SESSION-}"
+# read -r -a TDE_SESSIONS <<<"$TDE_CURRENT_SESSION"
+TDE_SESSIONS=($TDE_SESSIONS)
 
 # Command arguments
-DRY_RUN=
-VERBOSE=
+DRY_RUN=false
+VERBOSE=false
 PANES=1
 FOCUS=1
 SESSION_NAME="tde"
@@ -179,6 +179,7 @@ WINDOW_NAME=
 LAYOUT=main-vertical
 LAUNCH_OPTS=()
 PROJECT_DIRS=()
+TDE_CONFIG_DIR="${TDE_CONFIG_DIR-}"
 
 PROJECT_DEFS=() # Project workspaces (options and workspace directory)
 
@@ -191,64 +192,68 @@ write_warning_msg() {
 }
 
 write_verbose_msg() {
-    if [[ -n "$VERBOSE" ]]; then
+    if [[ "$VERBOSE" == true ]]; then
         echo "$(basename "$0"): info: $1" >&2
     fi
 }
 
 session_exists() {
     local session_name="$1"
-    if [[ $TDE_TEST == true ]]; then
-        [[ "$TDE_SESSION_CREATED" == true || "$TDE_CLIENT_COUNT" -gt 0 ]]
+    if [[ $DRY_RUN == true || $TDE_TEST == true ]]; then
+        printf '%s\n' "${TDE_SESSIONS[@]}" | grep -qx "$session_name" # Check array contains session name
     else
-        if [[ -n $DRY_RUN ]]; then
-            tmux has-session -t "$session_name" 2>/dev/null || [[ "$TDE_SESSION_CREATED" == true ]]
-        else
-            tmux has-session -t "$session_name" 2>/dev/null
-        fi
+        tmux has-session -t "$session_name" 2>/dev/null
     fi
 }
 
 # Print the name of the tmux session in the terminal or an empty string if not inside a tmux session.
 current_session() {
     if [[ $TDE_TEST == true ]]; then
-        echo "$TMUX"
+        echo "$TDE_CURRENT_SESSION"
     else
         [ -n "$TMUX" ] && tmux display-message -p '#S' || echo ""
     fi
 }
 
-# Print number of client terminals attached to session $1
-attached_client_count() {
-    if [[ $TDE_TEST == true ]]; then
-        echo "$TDE_CLIENT_COUNT"
-    else
-        tmux list-clients -t "$1" 2>/dev/null | wc -l
-    fi
-}
+# # Print number of client terminals attached to session $1
+# attached_client_count() {
+#     if [[ $TDE_TEST == true ]]; then
+#         local count=0
+#         for element in "${TDE_SESSIONS[@]}"; do
+#             if [[ "$element" == "$1" ]]; then
+#                 ((count++))
+#             fi
+#         done
+#         echo $count
+#     else
+#         tmux list-clients -t "$1" 2>/dev/null | wc -l
+#     fi
+# }
 
 # Attach session $1
 attach_session() {
     local session_name="$1"
-    if [[ -z $DRY_RUN ]] && ! session_exists "$session_name"; then
+    if ! session_exists "$session_name"; then
         write_error_msg "session does not exist: '$session_name'"
         exit 1
     fi
+    # echo "session_name: $session_name"
+    # echo "TDE_CURRENT_SESSION: $TDE_CURRENT_SESSION"
     if [[ $(current_session) == "$session_name" ]]; then # Do nothing
         write_verbose_msg "skipping attachment: session '$session_name' is already current"
         return
     fi
-    if [[ -z $TMUX ]]; then
-        local client_count
-        client_count=$(attached_client_count "$session_name")
-        if [[ $client_count -ne 0 ]]; then
-            local msg
-            msg="tmux session '$session_name' is attached to $client_count other client terminal"
-            if [[ $client_count -ne 1 ]]; then
-                msg="${msg}s"
-            fi
-            write_warning_msg "$msg"
-        fi
+    if [[ $TDE_TEST == true && -z "$TDE_CURRENT_SESSION" || -z "$TMUX" ]]; then # Not in tmux session
+        # local client_count
+        # client_count=$(attached_client_count "$session_name")
+        # if [[ $client_count -ne 0 ]]; then
+        #     local msg
+        #     msg="tmux session '$session_name' is attached to $client_count other client terminal"
+        #     if [[ $client_count -ne 1 ]]; then
+        #         msg="${msg}s"
+        #     fi
+        #     write_warning_msg "$msg"
+        # fi
         tmux_cmd attach-session -t "$session_name"
         return
     fi
@@ -257,7 +262,7 @@ attach_session() {
 
 # Print or execute tmux commands
 tmux_cmd() {
-    if [[ -n "$DRY_RUN" || $TDE_TEST == true ]]; then
+    if [[ $DRY_RUN == true || $TDE_TEST == true ]]; then
         echo "tmux $*"
     else
         write_verbose_msg "tmux $*"
@@ -419,7 +424,7 @@ existing_windows() {
 
 # Get window index by window name in a session
 window_index_by_name() {
-    if [[ -n "$DRY_RUN" || $TDE_TEST == true ]]; then
+    if [[ $DRY_RUN == true || $TDE_TEST == true ]]; then
         echo "999"
     else
         local session="$1"
@@ -579,6 +584,10 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [[ $DRY_RUN == true && $TDE_TEST == false ]]; then
+    TDE_SESSIONS=($(tmux list-sessions -F "#{session_name}"))
+fi
+
 if [[ -n "$TDE_CONFIG_DIR" ]]; then
     conf_dir="${TDE_CONFIG_DIR}"
 else
@@ -678,8 +687,11 @@ for index in "${!PROJECT_DEFS[@]}"; do
     if ! session_exists "$session_name"; then
         # Create session
         tmux_cmd new-session -d -s "$session_name" -c "$dir" -n "$WIN_NAME"
-        if [[ -n "$DRY_RUN" || $TDE_TEST == true ]]; then
-            TDE_SESSION_CREATED=true # So the session is not created again
+        if [[ $DRY_RUN == true || $TDE_TEST == true ]]; then
+            if [[ -z "$TDE_CURRENT_SESSION" ]]; then
+                TDE_CURRENT_SESSION="$session_name"
+            fi
+            TDE_SESSIONS+=("$session_name")
         fi
         # Source and execute optional tmux window configuration file
         tmux_file="$conf_dir/${theme}.tmux"
