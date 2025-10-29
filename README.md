@@ -37,13 +37,13 @@ DESCRIPTION
 
     One or more project workspace windows can be specified in configuration
     files or with command-line arguments. Workspace windows are assigned to a
-    named tmux session (see --session-name option).
+    named tmux session (see --session option).
 
     For each project workspace directory:
 
         1. A new tmux window is created (see --window-name option).
         2. Any additional panes are created (see --panes option).
-        3. The <session-name>.tmux file is sourced.
+        3. The <session>.tmux file is sourced.
         4. The window --layout option is applied.
         5. The pane --launch options are applied.
         6. The focus pane is selected (see --focus option).
@@ -83,11 +83,11 @@ OPTIONS
             --panes 2 --launch 3:ls
             --panes 3 --launch 1:nvim
 
-    -s, --session-name SESSION_NAME
-        Specify the tmux session name. The --session-name option determines the
-        configuration file names, for example the '--session-name monitor' option
+    -s, --session SESSION
+        Specify the tmux session name. The --session option determines the
+        configuration file names, for example the '--session monitor' option
         would set configuration file names to 'monitor.tde' and 'monitor.tmux'.
-        The default session name is 'tde'. SESSION_NAME must begin with an alpha
+        The default session name is 'tde'. SESSION must begin with an alpha
         numeric character and can only contain only alphanumeric characters,
         dashes, underscores, or periods.
 
@@ -115,7 +115,7 @@ CONFIGURATION FILES
     definitions, the latter contains tmux commands.
 
 SESSION CONFIGURATION FILES
-    Session configuration files are named '<session-name>.tde' and are sourced
+    Session configuration files are named '<session>.tde' and are sourced
     at session creation.
 
     A session configuration file specifies a set of project workspace windows,
@@ -124,10 +124,10 @@ SESSION CONFIGURATION FILES
         [OPTION...] PROJECT_DIR
 
     The following tde options are valid in tde configuration files: --focus,
-    --launch, --layout, --panes, --session-name, --theme, --window-name.
+    --launch, --layout, --panes, --session, --theme, --window-name.
     Omitted option values default to their command-line values.
 
-    The --session-name option can be used to create windows in other sessions
+    The --session option can be used to create windows in other sessions
     (both new and existing).
 
     Default option values can be assigned by setting PROJECT_DIR to '-'. The
@@ -136,7 +136,7 @@ SESSION CONFIGURATION FILES
 
     Blank lines and lines beginning with a '#' character are skipped.
 
-    The following example <session-name>.tde configuration file line creates a
+    The following example <session>.tde configuration file line creates a
     tmux window with three panes in the ~/nixos-configurations working
     directory. The first pane runs nvim, the third pane runs lazygit:
 
@@ -150,7 +150,7 @@ SESSION CONFIGURATION FILES
         -p 3 -l 2:htop -l '3:sudo iotop' -w monitor -L even-horizontal ~
 
 THEME FILES
-    Theme files contain tmux commands and are named '<session-name>.tmux',
+    Theme files contain tmux commands and are named '<session>.tmux',
     though this can be overridden using the --theme option.
 
     Theme files are sourced with the tmux 'source-file' command when a

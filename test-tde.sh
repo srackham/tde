@@ -806,7 +806,7 @@ TDE_SESSIONS=
 TDE_CURRENT_SESSION=
 run_test "Bad session name" \
     "./tde -s 'bad#session#name'" \
-    "tde: error: invalid --session-name option 'bad#session#name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods" 1
+    "tde: error: invalid --session option 'bad#session#name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods" 1
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
@@ -824,52 +824,52 @@ tde: error: tmux commands file '/tmp/test-tde/.config/tde/non-existent.tmux' not
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
 run_test "Missing session configuration file warning; refusing attachment; one project directory argument; --verbose" \
-    "./tde -s 'session-name-2' --verbose '$PROJECT1'" \
-    "tde: info: session configuration file '/tmp/test-tde/.config/tde/session-name-2.tde' not found
-tmux new-session -d -s session-name-2 -c /tmp/test-tde/project1 -n project1
-tde: info: tmux commands file '/tmp/test-tde/.config/tde/session-name-2.tmux' not found
-tmux set-option -t session-name-2:999 pane-base-index 1
-tmux select-layout -t session-name-2:999 main-vertical
-tmux select-pane -t session-name-2:999.1
-tmux select-window -t session-name-2:999
-tmux attach-session -t session-name-2"
+    "./tde -s 'session-2' --verbose '$PROJECT1'" \
+    "tde: info: session configuration file '/tmp/test-tde/.config/tde/session-2.tde' not found
+tmux new-session -d -s session-2 -c /tmp/test-tde/project1 -n project1
+tde: info: tmux commands file '/tmp/test-tde/.config/tde/session-2.tmux' not found
+tmux set-option -t session-2:999 pane-base-index 1
+tmux select-layout -t session-2:999 main-vertical
+tmux select-pane -t session-2:999.1
+tmux select-window -t session-2:999
+tmux attach-session -t session-2"
 
 TDE_CURRENT_SESSION=another-session
-write_conf session-name.tde "/tmp/test-tde/project1"
-write_conf session-name.tmux ""
+write_conf session.tde "/tmp/test-tde/project1"
+write_conf session.tmux ""
 run_test "Single-entry configuration file; nested session warning" \
-    "./tde -s 'session-name'" \
-    "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
-tmux source-file -t session-name /tmp/test-tde/.config/tde/session-name.tmux
-tmux set-option -t session-name:999 pane-base-index 1
-tmux select-layout -t session-name:999 main-vertical
-tmux select-pane -t session-name:999.1
-tmux select-window -t session-name:999
-tde: warning: refusing to attach nested tmux session 'session-name' inside tmux session 'another-session'"
+    "./tde -s 'session'" \
+    "tmux new-session -d -s session -c /tmp/test-tde/project1 -n project1
+tmux source-file -t session /tmp/test-tde/.config/tde/session.tmux
+tmux set-option -t session:999 pane-base-index 1
+tmux select-layout -t session:999 main-vertical
+tmux select-pane -t session:999.1
+tmux select-window -t session:999
+tde: warning: refusing to attach nested tmux session 'session' inside tmux session 'another-session'"
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
-rm_conf session-name.tde
-rm_conf session-name.tmux
+rm_conf session.tde
+rm_conf session.tmux
 run_test "One project directory argument" \
-    "./tde -s 'session-name' '$PROJECT1'" \
-    "tmux new-session -d -s session-name -c /tmp/test-tde/project1 -n project1
-tmux set-option -t session-name:999 pane-base-index 1
-tmux select-layout -t session-name:999 main-vertical
-tmux select-pane -t session-name:999.1
-tmux select-window -t session-name:999
-tmux attach-session -t session-name"
+    "./tde -s 'session' '$PROJECT1'" \
+    "tmux new-session -d -s session -c /tmp/test-tde/project1 -n project1
+tmux set-option -t session:999 pane-base-index 1
+tmux select-layout -t session:999 main-vertical
+tmux select-pane -t session:999.1
+tmux select-window -t session:999
+tmux attach-session -t session"
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
-write_conf session-default.tde "--session-name session-one --window-name one --panes 3 /tmp
---session-name session-two --theme theme --window-name two --panes 3 /tmp
+write_conf session-default.tde "--session session-one --window-name one --panes 3 /tmp
+--session session-two --theme theme --window-name two --panes 3 /tmp
 --window-name default --panes 3 /tmp
---session-name session-one --window-name three --panes 3 /tmp
---session-name session-two --window-name four --panes 3 /tmp"
+--session session-one --window-name three --panes 3 /tmp
+--session session-two --window-name four --panes 3 /tmp"
 write_conf theme.tmux ""
 run_test "Multiple interweaved sessions in single session config file" \
-    "./tde --session-name session-default" \
+    "./tde --session session-default" \
     "tmux new-session -d -s session-one -c /tmp -n one
 tmux set-option -t session-one:999 pane-base-index 1
 tmux split-window -v -t session-one:999 -c /tmp
