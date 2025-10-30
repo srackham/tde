@@ -220,22 +220,22 @@ tmux select-window -t tde:999"
 
 TDE_SESSIONS=tde
 TDE_CURRENT_SESSION=tde
-run_test "Two project directories appended to current session each with 2 panes and a launch command in pane 1" \
-    "./tde -l 1:ls -p 2 $PROJECT1 $PROJECT2" \
+run_test "Two project directories appended to current session each with 2 panes and a launch command in pane 1; focus pane 2" \
+    "./tde -l 1:ls -p 2 -f 2 $PROJECT1 $PROJECT2" \
     "tmux new-window -t tde: -c $PROJECT1 -n project1
 tmux set-option -t tde:999 pane-base-index 1
 tmux split-window -v -t tde:999 -c $PROJECT1
 tmux select-layout -t tde:999 main-vertical
 tmux send-keys -t tde:999.1 -l ls
 tmux send-keys -t tde:999.1 Enter
-tmux select-pane -t tde:999.1
+tmux select-pane -t tde:999.2
 tmux new-window -t tde: -c $PROJECT2 -n project2
 tmux set-option -t tde:999 pane-base-index 1
 tmux split-window -v -t tde:999 -c $PROJECT2
 tmux select-layout -t tde:999 main-vertical
 tmux send-keys -t tde:999.1 -l ls
 tmux send-keys -t tde:999.1 Enter
-tmux select-pane -t tde:999.1
+tmux select-pane -t tde:999.2
 tmux select-window -t tde:999"
 
 TDE_SESSIONS=tde
