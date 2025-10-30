@@ -200,7 +200,7 @@ write_warning_msg() {
 
 write_verbose_msg() {
     if [[ "$VERBOSE" == true ]]; then
-        echo "$(basename "$0"): info: $1" >&2
+        echo "$(basename "$0"): $1" >&2
     fi
 }
 

@@ -134,7 +134,7 @@ tmux set-option -t tde:999 pane-base-index 1
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
-tde: info: skipping attachment: session 'tde' is already current"
+tde: skipping attachment: session 'tde' is already current"
 
 TDE_SESSIONS=tde
 TDE_CURRENT_SESSION=tde
@@ -567,7 +567,7 @@ TDE_SESSIONS=tde
 TDE_CURRENT_SESSION=tde
 run_test "Number of panes set by launch option" \
     "./tde -l 3:ls -v $PROJECT1" \
-    "tde: info: number of panes increased to 3 to accomodate launch options: '3:ls'
+    "tde: number of panes increased to 3 to accomodate launch options: '3:ls'
 tmux new-window -t tde: -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde:999 pane-base-index 1
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project1
@@ -577,7 +577,7 @@ tmux send-keys -t tde:999.3 -l ls
 tmux send-keys -t tde:999.3 Enter
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
-tde: info: skipping attachment: session 'tde' is already current"
+tde: skipping attachment: session 'tde' is already current"
 
 TDE_SESSIONS=tde
 TDE_CURRENT_SESSION=tde
@@ -645,9 +645,9 @@ TDE_CURRENT_SESSION=
 write_conf tde.tde "/tmp/test-tde/project1"
 run_test "Configuration file with single directory-only entry; verbose" \
     "./tde --verbose" \
-    "tde: info: reading session configuration file '/tmp/test-tde/.config/tde/tde.tde'
+    "tde: reading session configuration file '/tmp/test-tde/.config/tde/tde.tde'
 tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
-tde: info: tmux commands file '/tmp/test-tde/.config/tde/tde.tmux' not found
+tde: tmux commands file '/tmp/test-tde/.config/tde/tde.tmux' not found
 tmux set-option -t tde:999 pane-base-index 1
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
@@ -833,9 +833,9 @@ TDE_SESSIONS=
 TDE_CURRENT_SESSION=
 run_test "Missing session configuration file warning; refusing attachment; one project directory argument; --verbose" \
     "./tde -s 'session-2' --verbose '$PROJECT1'" \
-    "tde: info: session configuration file '/tmp/test-tde/.config/tde/session-2.tde' not found
+    "tde: session configuration file '/tmp/test-tde/.config/tde/session-2.tde' not found
 tmux new-session -d -s session-2 -c /tmp/test-tde/project1 -n project1
-tde: info: tmux commands file '/tmp/test-tde/.config/tde/session-2.tmux' not found
+tde: tmux commands file '/tmp/test-tde/.config/tde/session-2.tmux' not found
 tmux set-option -t session-2:999 pane-base-index 1
 tmux select-layout -t session-2:999 main-vertical
 tmux select-pane -t session-2:999.1
