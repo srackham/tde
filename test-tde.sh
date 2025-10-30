@@ -112,7 +112,8 @@ tmux split-window -v -t mysession:999 -c /tmp/test-tde/project1
 tmux split-window -v -t mysession:999 -c /tmp/test-tde/project1
 tmux select-layout -t mysession:999 main-vertical
 tmux select-pane -t mysession:999.1
-tmux select-window -t mysession:999"
+tmux select-window -t mysession:999
+tmux attach-session -t mysession"
 
 TDE_SESSIONS=tde
 TDE_CURRENT_SESSION=tde
@@ -651,7 +652,7 @@ tmux set-option -t tde:999 pane-base-index 1
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
-tde: info: skipping attachment: session 'tde' is already current"
+tmux attach-session -t tde"
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
@@ -662,7 +663,8 @@ tmux set-option -t tde:999 pane-base-index 1
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
 tde: warning: skipping duplicate window name: 'project1'
-tmux select-window -t tde:999"
+tmux select-window -t tde:999
+tmux attach-session -t tde"
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
@@ -673,7 +675,8 @@ tmux set-option -t tde:999 pane-base-index 1
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project1
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
-tmux select-window -t tde:999"
+tmux select-window -t tde:999
+tmux attach-session -t tde"
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
@@ -685,7 +688,8 @@ tmux select-layout -t tde:999 main-vertical
 tmux send-keys -t tde:999.1 -l nvim
 tmux send-keys -t tde:999.1 Enter
 tmux select-pane -t tde:999.1
-tmux select-window -t tde:999"
+tmux select-window -t tde:999
+tmux attach-session -t tde"
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
@@ -700,7 +704,8 @@ tmux send-keys -t tde:999.1 Enter
 tmux send-keys -t tde:999.2 -l lazygit
 tmux send-keys -t tde:999.2 Enter
 tmux select-pane -t tde:999.1
-tmux select-window -t tde:999" 0
+tmux select-window -t tde:999
+tmux attach-session -t tde"
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
@@ -727,7 +732,8 @@ tmux send-keys -t tde:999.1 Enter
 tmux send-keys -t tde:999.3 -l lazygit
 tmux send-keys -t tde:999.3 Enter
 tmux select-pane -t tde:999.2
-tmux select-window -t tde:999" 0
+tmux select-window -t tde:999
+tmux attach-session -t tde"
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
@@ -762,7 +768,8 @@ tmux send-keys -t tde:999.1 Enter
 tmux send-keys -t tde:999.3 -l lazygit
 tmux send-keys -t tde:999.3 Enter
 tmux select-pane -t tde:999.1
-tmux select-window -t tde:999" 0
+tmux select-window -t tde:999
+tmux attach-session -t tde"
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
@@ -800,7 +807,8 @@ tmux select-layout -t tde:999 even-horizontal
 tmux send-keys -t tde:999.2 -l nvim
 tmux send-keys -t tde:999.2 Enter
 tmux select-pane -t tde:999.2
-tmux select-window -t tde:999" 0
+tmux select-window -t tde:999
+tmux attach-session -t tde"
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
@@ -859,48 +867,3 @@ tmux select-layout -t session:999 main-vertical
 tmux select-pane -t session:999.1
 tmux select-window -t session:999
 tmux attach-session -t session"
-
-TDE_SESSIONS=
-TDE_CURRENT_SESSION=
-write_conf session-default.tde "--session session-one --window-name one --panes 3 /tmp
---session session-two --theme theme --window-name two --panes 3 /tmp
---window-name default --panes 3 /tmp
---session session-one --window-name three --panes 3 /tmp
---session session-two --window-name four --panes 3 /tmp"
-write_conf theme.tmux ""
-run_test "Multiple interweaved sessions in single session config file" \
-    "./tde --session session-default" \
-    "tmux new-session -d -s session-one -c /tmp -n one
-tmux set-option -t session-one:999 pane-base-index 1
-tmux split-window -v -t session-one:999 -c /tmp
-tmux split-window -v -t session-one:999 -c /tmp
-tmux select-layout -t session-one:999 main-vertical
-tmux select-pane -t session-one:999.1
-tmux new-session -d -s session-two -c /tmp -n two
-tmux set-option -t session-two:999 pane-base-index 1
-tmux split-window -v -t session-two:999 -c /tmp
-tmux split-window -v -t session-two:999 -c /tmp
-tmux select-layout -t session-two:999 main-vertical
-tmux select-pane -t session-two:999.1
-tmux new-window -t session-default: -c /tmp -n default
-tmux set-option -t session-default:999 pane-base-index 1
-tmux split-window -v -t session-default:999 -c /tmp
-tmux split-window -v -t session-default:999 -c /tmp
-tmux select-layout -t session-default:999 main-vertical
-tmux select-pane -t session-default:999.1
-tmux new-window -t session-one: -c /tmp -n three
-tmux set-option -t session-one:999 pane-base-index 1
-tmux split-window -v -t session-one:999 -c /tmp
-tmux split-window -v -t session-one:999 -c /tmp
-tmux select-layout -t session-one:999 main-vertical
-tmux select-pane -t session-one:999.1
-tmux new-window -t session-two: -c /tmp -n four
-tmux set-option -t session-two:999 pane-base-index 1
-tmux split-window -v -t session-two:999 -c /tmp
-tmux split-window -v -t session-two:999 -c /tmp
-tmux select-layout -t session-two:999 main-vertical
-tmux select-pane -t session-two:999.1
-tmux select-window -t session-two:999
-tmux attach-session -t session-two"
-
-exit

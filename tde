@@ -32,6 +32,8 @@ DESCRIPTION
     The first newly created workspace window is selected and the session is
     attached to the client terminal.
 
+    If the session already exists then pro
+
 OPTIONS
      -n, --dry-run
         Print tmux commands without doing anything. '999' is a dummy value for
@@ -95,7 +97,7 @@ CONFIGURATION FILES
     theme files. The former contains tde project workspace window
     definitions, the latter contains tmux commands.
 
-SESSION CONFIGURATION FILES
+SESSION CONFIGURATION FILE
     Session configuration files are named '<session>.tde' and are sourced
     at session creation.
 
@@ -130,7 +132,7 @@ SESSION CONFIGURATION FILES
 
         -p 3 -l 2:htop -l '3:sudo iotop' -w monitor -L even-horizontal ~
 
-THEME FILES
+TMUX COMMANDS FILE
     Theme files contain tmux commands and are named '<session>.tmux',
     though this can be overridden using the --theme option.
 
@@ -165,8 +167,7 @@ TMUX="${TMUX-}"
 # Environment variables used for testing
 TDE_TEST="${TDE_TEST-false}"
 TDE_CURRENT_SESSION="${TDE_CURRENT_SESSION-}"
-# read -r -a TDE_SESSIONS <<<"$TDE_CURRENT_SESSION"
-TDE_SESSIONS=($TDE_SESSIONS)
+mapfile -t TDE_SESSIONS <<<"$TDE_SESSIONS" # Convert string list to array
 
 # Command arguments
 DRY_RUN=false
@@ -215,21 +216,6 @@ current_session() {
     fi
 }
 
-# # Print number of client terminals attached to session $1
-# attached_client_count() {
-#     if [[ $TDE_TEST == true ]]; then
-#         local count=0
-#         for element in "${TDE_SESSIONS[@]}"; do
-#             if [[ "$element" == "$1" ]]; then
-#                 ((count++))
-#             fi
-#         done
-#         echo $count
-#     else
-#         tmux list-clients -t "$1" 2>/dev/null | wc -l
-#     fi
-# }
-
 # Attach session $1
 attach_session() {
     local session="$1"
@@ -237,23 +223,11 @@ attach_session() {
         write_error_msg "session does not exist: '$session'"
         exit 1
     fi
-    # echo "session: $session"
-    # echo "TDE_CURRENT_SESSION: $TDE_CURRENT_SESSION"
-    if [[ $(current_session) == "$session" ]]; then # Do nothing
+    if [[ "$(current_session)" == "$session" ]]; then # Do nothing
         write_verbose_msg "skipping attachment: session '$session' is already current"
         return
     fi
     if [[ $TDE_TEST == true && -z "$TDE_CURRENT_SESSION" || -z "$TMUX" ]]; then # Not in tmux session
-        # local client_count
-        # client_count=$(attached_client_count "$session")
-        # if [[ $client_count -ne 0 ]]; then
-        #     local msg
-        #     msg="tmux session '$session' is attached to $client_count other client terminal"
-        #     if [[ $client_count -ne 1 ]]; then
-        #         msg="${msg}s"
-        #     fi
-        #     write_warning_msg "$msg"
-        # fi
         tmux_cmd attach-session -t "$session"
         return
     fi
@@ -294,7 +268,7 @@ validate_focus() {
     fi
 }
 
-validate_session() {
+validate_session_name() {
     local name
     name="$1"
     if ! [[ "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.-]*$ ]]; then
@@ -330,7 +304,7 @@ validate_window_name() {
     fi
 }
 
-# Parses and validates command arguments and returns a '|' separated project defintion.
+# Parses and validates command arguments and append a '|' separated project definition to the PROJECT_DEFS array.
 # Each definition is formatted like:'
 # <focus>|<panes>|<launches>|<dir>
 parse_project_def() {
@@ -342,8 +316,6 @@ parse_project_def() {
 
     local panes=""
     local focus=""
-    local session=""
-    local tmux_cmds=""
     local layout=""
     local window_name=""
     local launches=()
@@ -370,20 +342,6 @@ parse_project_def() {
             validate_layout "$layout"
             args=("${args[@]:2}")
             ;;
-        -s | --session)
-            session="${args[1]}"
-            if [[ -n "$session" ]]; then
-                validate_session "$session"
-            fi
-            args=("${args[@]:2}")
-            ;;
-        -t | --theme)
-            tmux_cmds="${args[1]}"
-            if [[ -n "$tmux_cmds" ]]; then
-                validate_theme_name "$tmux_cmds"
-            fi
-            args=("${args[@]:2}")
-            ;;
         -w | --window-name)
             window_name="${args[1]}"
             validate_window_name "$window_name"
@@ -406,7 +364,7 @@ parse_project_def() {
 
     dir=$(eval echo "$dir") # Expand ~ and $HOME
 
-    PROJECT_DEFS+=("$session|$tmux_cmds|$layout|$focus|$window_name|$panes|$(
+    PROJECT_DEFS+=("$layout|$focus|$window_name|$panes|$(
         IFS=$'\t'
         echo "${launches[*]}"
     )|$dir")
@@ -480,8 +438,8 @@ validate_project_defs() {
     local def
     for def in "${PROJECT_DEFS[@]}"; do
 
-        local session tmux_cmds layout focus window_name panes launch_defs dir
-        IFS="|" read -r session tmux_cmds layout focus window_name panes launch_defs dir <<<"$def"
+        local layout focus window_name panes launch_defs dir
+        IFS="|" read -r layout focus window_name panes launch_defs dir <<<"$def"
 
         local _=
         validate_launch_defs "$launch_defs" _
@@ -551,7 +509,7 @@ while [[ $# -gt 0 ]]; do
         shift 2
         ;;
     -s | --session)
-        validate_session "${2-}"
+        validate_session_name "${2-}"
         SESSION="$2"
         shift 2
         ;;
@@ -585,7 +543,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ $DRY_RUN == true && $TDE_TEST == false ]]; then
-    TDE_SESSIONS=($(tmux list-sessions -F "#{session}"))
+    mapfile -t TDE_SESSIONS <<<"$(tmux list-sessions -F "#{session_name}")"
 fi
 
 if [[ -n "$TDE_CONFIG_DIR" ]]; then
@@ -624,10 +582,9 @@ EXISTING_WINDOWS="$(existing_windows "$SESSION")"
 
 # Create project workspace windows
 FIRST_WIN_INDEX=""
-session="$SESSION"
 for index in "${!PROJECT_DEFS[@]}"; do
     def="${PROJECT_DEFS[$index]}"
-    IFS="|" read -r session tmux_cmds layout focus window_name panes launch_defs dir <<<"$def"
+    IFS="|" read -r layout focus window_name panes launch_defs dir <<<"$def"
 
     if [[ "$dir" == "-" ]]; then
         if [[ -n "$layout" ]]; then
@@ -652,18 +609,6 @@ for index in "${!PROJECT_DEFS[@]}"; do
     focus="${focus:-$FOCUS}"
     panes="${panes:-$PANES}"
 
-    if [[ -n "$session" ]]; then
-        session="$session"
-        theme="$session"
-    else
-        session="$SESSION"
-        theme="${THEME:-$SESSION}"
-    fi
-
-    if [[ -n "$tmux_cmds" ]]; then
-        theme="$tmux_cmds"
-    fi
-
     if [[ -z "$launch_defs" ]]; then
         # Use command-line options in lieu of explicit launch defs
         save_ifs="$IFS"
@@ -684,26 +629,24 @@ for index in "${!PROJECT_DEFS[@]}"; do
     fi
 
     WIN_NAME="${window_name:-$(get_window_name "$dir")}"
-    if ! session_exists "$session"; then
+    if ! session_exists "$SESSION"; then
         # Create session
-        tmux_cmd new-session -d -s "$session" -c "$dir" -n "$WIN_NAME"
+        tmux_cmd new-session -d -s "$SESSION" -c "$dir" -n "$WIN_NAME"
         if [[ $DRY_RUN == true || $TDE_TEST == true ]]; then
-            if [[ -z "$TDE_CURRENT_SESSION" ]]; then
-                TDE_CURRENT_SESSION="$session"
-            fi
-            TDE_SESSIONS+=("$session")
+            TDE_SESSIONS+=("$SESSION")
         fi
         # Source and execute optional tmux window configuration file
-        tmux_file="$conf_dir/${theme}.tmux"
-        if [[ -f "$tmux_file" ]]; then
-            tmux_cmd source-file -t "$session" "$tmux_file"
+        cmds="${THEME:-$SESSION}"
+        tmux_cnds_file="$conf_dir/${cmds}.tmux"
+        if [[ -f "$tmux_cnds_file" ]]; then
+            tmux_cmd source-file -t "$SESSION" "$tmux_cnds_file"
         else
-            if [[ -n "$THEME" || -n "$tmux_cmds" ]]; then
-                # --theme was used explicitly so we expect to find the tmux command file.
-                write_error_msg "tmux commands file '$tmux_file' not found"
+            if [[ -n "$THEME" ]]; then
+                # --theme was explicitly defined so we expect to find the tmux command file.
+                write_error_msg "tmux commands file '$tmux_cnds_file' not found"
                 exit 1
             else
-                write_verbose_msg "tmux commands file '$tmux_file' not found"
+                write_verbose_msg "tmux commands file '$tmux_cnds_file' not found"
             fi
         fi
     else
@@ -711,26 +654,26 @@ for index in "${!PROJECT_DEFS[@]}"; do
             write_warning_msg "skipping duplicate window name: '$WIN_NAME'"
             continue
         fi
-        tmux_cmd new-window -t "$session:" -c "$dir" -n "$WIN_NAME"
+        tmux_cmd new-window -t "$SESSION:" -c "$dir" -n "$WIN_NAME"
     fi
 
-    WIN_INDEX="$(window_index_by_name "$session" "$WIN_NAME")"
+    WIN_INDEX="$(window_index_by_name "$SESSION" "$WIN_NAME")"
     FIRST_WIN_INDEX="${FIRST_WIN_INDEX:=$WIN_INDEX}"
 
-    tmux_cmd set-option -t "$session:$WIN_INDEX" pane-base-index 1
+    tmux_cmd set-option -t "$SESSION:$WIN_INDEX" pane-base-index 1
 
     for ((i = panes; i > 1; i--)); do
-        tmux_cmd split-window -v -t "$session:$WIN_INDEX" -c "$dir"
+        tmux_cmd split-window -v -t "$SESSION:$WIN_INDEX" -c "$dir"
     done
 
-    tmux_cmd select-layout -t "$session:$WIN_INDEX" "$layout"
-    execute_launch_commands "$session" "$WIN_INDEX" "$launch_defs"
-    tmux_cmd select-pane -t "$session:$WIN_INDEX.$focus"
+    tmux_cmd select-layout -t "$SESSION:$WIN_INDEX" "$layout"
+    execute_launch_commands "$SESSION" "$WIN_INDEX" "$launch_defs"
+    tmux_cmd select-pane -t "$SESSION:$WIN_INDEX.$focus"
     EXISTING_WINDOWS+=$'\n'"$WIN_NAME" # Update so subsequent checks are accurate
 done
 
 if [[ -n "$FIRST_WIN_INDEX" ]]; then
-    tmux_cmd select-window -t "$session:$FIRST_WIN_INDEX"
+    tmux_cmd select-window -t "$SESSION:$FIRST_WIN_INDEX"
 fi
 
-attach_session "$session"
+attach_session "$SESSION"
