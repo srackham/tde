@@ -42,11 +42,12 @@ DESCRIPTION
     For each project workspace directory:
 
         1. A new tmux window is created (see --window-name option).
-        2. Any additional panes are created (see --panes option).
-        3. The <session>.tmux file is sourced.
+        2. The optional tmux commands are sourced and executed (see
+           TMUX COMMANDS FILE).
+        3. Additional panes, if specified, are created (see --panes option).
         4. The window --layout option is applied.
-        5. The pane --launch options are applied.
-        6. The focus pane is selected (see --focus option).
+        5. The pane --launch options are executed.
+        6. The --focus option pane is selected.
 
     The first newly created workspace window is selected and the session is
     attached to the client terminal.
@@ -111,13 +112,11 @@ OPTIONS
 
 CONFIGURATION FILES
     There are two types of configuration files: session configuration files and
-    tmux command files.
+    tmux commands files.
 
     Configuration files are optional. The configuration files default directory
     location is $HOME/.config/tde/. A custom configuration files directory can
     be specified with the TDE_CONFIG_DIR environment variable.
-
-    Configuration files are sourced once at session creation.
 
 SESSION CONFIGURATION FILE
     Session configuration files contain tde workspace window definitions and are
@@ -157,11 +156,16 @@ SESSION CONFIGURATION FILE
 
 TMUX COMMANDS FILE
     A tmux command file contains tmux commands; they are sourced and executed by
-    the tmux 'source-file' command when the corresponding session is created
-    (see the tmux(1) man page).
+    the tmux 'source-file' command after a session window is created (see the
+    tmux(1) man page).
+
+    Unless overridden by the --tmux-commands option, the tmux commands file name
+    match either the host name ('<host-name>.tmux') or the session name
+    ('<session-name>.tmux'). The host name takes precedence over the session
+    name.
 
     tmux command file names must match either the host name ('<host-name>.tmux')
-    or the tmux commands name ('<tmux-commands-name>.tmux'). The host name takes
+    or the tmux commands option ('<tmux-commands-option>.tmux'). The host name takes
     precedence over the tmux commands name.
 
 LAYOUTS

@@ -131,6 +131,7 @@ run_test "--window-name option on command-line; verbose option" \
     "./tde --verbose -w mywindow $PROJECT1" \
     "tmux new-window -t tde: -c /tmp/test-tde/project1 -n mywindow
 tmux set-option -t tde:999 pane-base-index 1
+tde: tmux commands file '/tmp/test-tde/.config/tde/tde.tmux' not found
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
@@ -570,6 +571,7 @@ run_test "Number of panes set by launch option" \
     "tde: number of panes increased to 3 to accomodate launch options: '3:ls'
 tmux new-window -t tde: -c /tmp/test-tde/project1 -n project1
 tmux set-option -t tde:999 pane-base-index 1
+tde: tmux commands file '/tmp/test-tde/.config/tde/tde.tmux' not found
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project1
 tmux split-window -v -t tde:999 -c /tmp/test-tde/project1
 tmux select-layout -t tde:999 main-vertical
@@ -647,8 +649,8 @@ run_test "Configuration file with single directory-only entry; verbose" \
     "./tde --verbose" \
     "tde: reading session configuration file '/tmp/test-tde/.config/tde/tde.tde'
 tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
-tde: tmux commands file '/tmp/test-tde/.config/tde/tde.tmux' not found
 tmux set-option -t tde:999 pane-base-index 1
+tde: tmux commands file '/tmp/test-tde/.config/tde/tde.tmux' not found
 tmux select-layout -t tde:999 main-vertical
 tmux select-pane -t tde:999.1
 tmux select-window -t tde:999
@@ -827,6 +829,7 @@ TDE_CURRENT_SESSION=
 run_test "Missing tmux commands file" \
     "./tde -t non-existent" \
     "tmux new-session -d -s tde -c /tmp/test-tde/project1 -n project1
+tmux set-option -t tde:999 pane-base-index 1
 tde: error: tmux commands file '/tmp/test-tde/.config/tde/non-existent.tmux' not found" 1
 
 TDE_SESSIONS=
@@ -835,8 +838,8 @@ run_test "Missing session configuration file warning; refusing attachment; one p
     "./tde -s 'session-2' --verbose '$PROJECT1'" \
     "tde: session configuration file '/tmp/test-tde/.config/tde/session-2.tde' not found
 tmux new-session -d -s session-2 -c /tmp/test-tde/project1 -n project1
-tde: tmux commands file '/tmp/test-tde/.config/tde/session-2.tmux' not found
 tmux set-option -t session-2:999 pane-base-index 1
+tde: tmux commands file '/tmp/test-tde/.config/tde/session-2.tmux' not found
 tmux select-layout -t session-2:999 main-vertical
 tmux select-pane -t session-2:999.1
 tmux select-window -t session-2:999
@@ -848,8 +851,8 @@ write_conf session.tmux ""
 run_test "Single-entry configuration file; nested session warning" \
     "./tde -s 'session'" \
     "tmux new-session -d -s session -c /tmp/test-tde/project1 -n project1
-tmux source-file -t session: /tmp/test-tde/.config/tde/session.tmux
 tmux set-option -t session:999 pane-base-index 1
+tmux source-file -t session:999 /tmp/test-tde/.config/tde/session.tmux
 tmux select-layout -t session:999 main-vertical
 tmux select-pane -t session:999.1
 tmux select-window -t session:999
