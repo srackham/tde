@@ -171,20 +171,22 @@ LAYOUTS
 EOF
 }
 
-# Environment variables
-TMUX="${TMUX-}"
-
 # Environment variables used for testing
 TDE_TEST="${TDE_TEST-false}"
 TDE_CURRENT_SESSION="${TDE_CURRENT_SESSION-}"
 mapfile -t TDE_SESSIONS <<<"${TDE_SESSIONS-}" # Convert string list to array
+
+# Environment variables
+TMUX="${TMUX-}"
+HOSTNAME=${TDE_HOST-$(hostname)}
 
 # Command arguments
 DRY_RUN=false
 VERBOSE=false
 PANES=1
 FOCUS=1
-SESSION="tde"
+SESSION=tde
+EXPLICIT_SESSION=false
 TMUX_COMMANDS=
 WINDOW_NAME=
 LAYOUT=main-vertical
@@ -521,6 +523,7 @@ while [[ $# -gt 0 ]]; do
     -s | --session)
         validate_session_name "${2-}"
         SESSION="$2"
+        EXPLICIT_SESSION=true
         shift 2
         ;;
     -t | --tmux-commands)
@@ -556,23 +559,36 @@ if [[ $DRY_RUN == true && $TDE_TEST == false ]]; then
     mapfile -t TDE_SESSIONS <<<"$(tmux list-sessions -F "#{session_name}" 2>/dev/null || echo "")"
 fi
 
-if [[ -n "$TDE_CONFIG_DIR" ]]; then
-    conf_dir="${TDE_CONFIG_DIR}"
-else
-    conf_dir="${XDG_CONFIG_HOME:-$HOME/.config/tde}"
-fi
+# Print the path of the first configuration file that exists from the list of base name arguments.
+config_file() {
+    local base_names=("${@}")
+    local conf_dir="${TDE_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/tde}"
+    local conf_file
+    for base_name in "${base_names[@]}"; do
+        conf_file="$conf_dir/$base_name"
+        if [ -f "$conf_file" ]; then
+            echo "$conf_file"
+            return
+        fi
+        write_verbose_msg "configuration file '$conf_file' not found"
+    done
+    echo ""
+}
 
 if ! session_exists "$SESSION"; then
     # Read, parse and validate config file and append to PROJECT_DEFS
-    conf_file="$conf_dir/${SESSION}.tde"
-    if [[ -f "$conf_file" ]]; then
+    base_names=()
+    if [ $EXPLICIT_SESSION = true ]; then
+        base_names+=("$SESSION.tde")
+    fi
+    base_names+=("$HOSTNAME.tde" "tde.tde")
+    conf_file="$(config_file "${base_names[@]}")"
+    if [ -n "$conf_file" ]; then
         write_verbose_msg "reading session configuration file '$conf_file'"
         while IFS= read -r line; do
             [[ -z "$line" || "$line" =~ ^# ]] && continue
             parse_project_def "$line"
         done <"$conf_file"
-    else
-        write_verbose_msg "session configuration file '$conf_file' not found"
     fi
 fi
 
@@ -659,18 +675,23 @@ for index in "${!PROJECT_DEFS[@]}"; do
     tmux_cmd set-option -t "$SESSION:$WIN_INDEX" pane-base-index 1
 
     # Source and execute optional tmux window configuration file
-    cmds="${TMUX_COMMANDS:-$SESSION}"
-    tmux_cnds_file="$conf_dir/${cmds}.tmux"
-    if [[ -f "$tmux_cnds_file" ]]; then
-        tmux_cmd source-file -t "$SESSION:$WIN_INDEX" "$tmux_cnds_file"
-    else
-        if [[ -n "$TMUX_COMMANDS" ]]; then
-            # --tmux-commands was explicitly defined so we expect to find the tmux command file.
-            write_error_msg "tmux commands file '$tmux_cnds_file' not found"
+    base_names=()
+    if [ -n "$TMUX_COMMANDS" ]; then
+        base_names+=("$TMUX_COMMANDS.tmux")
+        tmux_cmds_file="$(config_file "${base_names[@]}")"
+        if [ -z "$tmux_cmds_file" ]; then
+            write_error_msg "tmux commands file '$TMUX_COMMANDS.tmux' not found"
             exit 1
-        else
-            write_verbose_msg "tmux commands file '$tmux_cnds_file' not found"
         fi
+    else
+        if [ $EXPLICIT_SESSION = true ]; then
+            base_names+=("$SESSION.tmux")
+        fi
+        base_names+=("$HOSTNAME.tmux" "tde.tmux")
+        tmux_cmds_file="$(config_file "${base_names[@]}")"
+    fi
+    if [ -n "$tmux_cmds_file" ]; then
+        tmux_cmd source-file -t "$SESSION:$WIN_INDEX" "$tmux_cmds_file"
     fi
 
     for ((i = panes; i > 1; i--)); do
