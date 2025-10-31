@@ -6,7 +6,7 @@ A tmux-based workspace-centric text windows manager.
 
 Install [tmux](https://github.com/tmux/tmux/) if it is not already installed.
 
-Download `tde` and the default theme file:
+Download `tde` and the default tmux commands file:
 
 ```bash
 mkdir -p ~/.local/bin
@@ -87,19 +87,19 @@ OPTIONS
             --panes 3 --launch 1:nvim
 
     -s, --session SESSION
-        Specify the tmux session name. The --session option determines the
-        configuration file names, for example the '--session monitor' option
-        would set the session configuration file name to 'monitor.tde' and the
-        tmux commands file name to 'monitor.tmux'. The default session name is
-        'tde'. SESSION must begin with an alpha numeric character and can only
-        contain only alphanumeric characters, dashes, underscores, or periods.
+        Specify the tmux session name. The --session option also sets the
+        configuration file names, for example '--session monitor' would set the
+        session configuration file name to 'monitor.tde' and the tmux commands
+        file name to 'monitor.tmux'. The default session name is 'tde'. SESSION
+        must begin with an alpha numeric character and can only contain only
+        alphanumeric characters, dashes, underscores, or periods.
 
-    -t, --theme THEME
-        This option sets the tmux commands file name. For example the '--theme
-        red' option sets the tmux commands file name to 'red.tmux' (see TMUX
-        COMMANDS FILES). THEME must begin with an alpha numeric character and
-        can only contain only alphanumeric characters, dashes, underscores, or
-        periods.
+    -t, --tmux-commands TMUX_COMMANDS
+        This option sets the tmux commands file name. For example the
+        '--tmux-commands red' option sets the tmux commands file name to
+        'red.tmux' (see TMUX COMMANDS FILES). TMUX_COMMANDS must begin with an
+        alpha numeric character and can only contain only alphanumeric
+        characters, dashes, underscores, or periods.
 
     -w, --window-name WINDOW_NAME
         Sets the tmux workspace window name. Defaults to the project directory's
@@ -120,10 +120,10 @@ CONFIGURATION FILES
     Configuration files are sourced once at session creation.
 
 SESSION CONFIGURATION FILE
-    Session configuration files contain tde workspace window definitions; they
-    are sourced and executed when the corresponding session is created.
+    Session configuration files contain tde workspace window definitions and are
+    sourced and executed when the corresponding session is created.
 
-    Session configuration file names must match either the host name
+    Session configuration file names match either the host name
     ('<host-name>.tde') or the session name ('<session-name>.tde'). The host
     name takes precedence over the session name.
 
@@ -161,8 +161,8 @@ TMUX COMMANDS FILE
     (see the tmux(1) man page).
 
     tmux command file names must match either the host name ('<host-name>.tmux')
-    or the theme name ('<theme-name>.tmux'). The host name takes precedence over
-    the theme name.
+    or the tmux commands name ('<tmux-commands-name>.tmux'). The host name takes
+    precedence over the tmux commands name.
 
 LAYOUTS
     tmux preset or custom layouts can be applied to project workspace windows
@@ -189,4 +189,4 @@ LAYOUTS
 
 - Sessions can be built from multiple session configuration files using the same `--session` option.
 - Use the shell `clear` command to create a null launch option, this is handy if you want to override the default launch options, for example, `--launch 1:clear`.
-- Use the tmux `run-shell` to run shell commands synchronously from theme files.
+- Use the tmux `run-shell` to run shell commands synchronously from tmux commands files.

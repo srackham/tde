@@ -819,8 +819,8 @@ run_test "Bad session name" \
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
 run_test "Bad tmux commands name" \
-    "./tde -t 'bad#theme#name'" \
-    "tde: error: invalid --theme option 'bad#theme#name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods" 1
+    "./tde -t 'bad#tmux#commands#name'" \
+    "tde: error: invalid --tmux-commands option 'bad#tmux#commands#name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods" 1
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
@@ -848,7 +848,7 @@ write_conf session.tmux ""
 run_test "Single-entry configuration file; nested session warning" \
     "./tde -s 'session'" \
     "tmux new-session -d -s session -c /tmp/test-tde/project1 -n project1
-tmux source-file -t session /tmp/test-tde/.config/tde/session.tmux
+tmux source-file -t session: /tmp/test-tde/.config/tde/session.tmux
 tmux set-option -t session:999 pane-base-index 1
 tmux select-layout -t session:999 main-vertical
 tmux select-pane -t session:999.1

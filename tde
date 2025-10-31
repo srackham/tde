@@ -68,19 +68,19 @@ OPTIONS
             --panes 3 --launch 1:nvim
 
     -s, --session SESSION
-        Specify the tmux session name. The --session option determines the
-        configuration file names, for example the '--session monitor' option
-        would set the session configuration file name to 'monitor.tde' and the
-        tmux commands file name to 'monitor.tmux'. The default session name is
-        'tde'. SESSION must begin with an alpha numeric character and can only
-        contain only alphanumeric characters, dashes, underscores, or periods.
+        Specify the tmux session name. The --session option also sets the
+        configuration file names, for example '--session monitor' would set the
+        session configuration file name to 'monitor.tde' and the tmux commands
+        file name to 'monitor.tmux'. The default session name is 'tde'. SESSION
+        must begin with an alpha numeric character and can only contain only
+        alphanumeric characters, dashes, underscores, or periods.
 
-    -t, --theme THEME
-        This option sets the tmux commands file name. For example the '--theme
-        red' option sets the tmux commands file name to 'red.tmux' (see TMUX
-        COMMANDS FILES). THEME must begin with an alpha numeric character and
-        can only contain only alphanumeric characters, dashes, underscores, or
-        periods.
+    -t, --tmux-commands TMUX_COMMANDS
+        This option sets the tmux commands file name. For example the
+        '--tmux-commands red' option sets the tmux commands file name to
+        'red.tmux' (see TMUX COMMANDS FILES). TMUX_COMMANDS must begin with an
+        alpha numeric character and can only contain only alphanumeric
+        characters, dashes, underscores, or periods.
 
     -w, --window-name WINDOW_NAME
         Sets the tmux workspace window name. Defaults to the project directory's
@@ -101,10 +101,10 @@ CONFIGURATION FILES
     Configuration files are sourced once at session creation.
 
 SESSION CONFIGURATION FILE
-    Session configuration files contain tde workspace window definitions; they
-    are sourced and executed when the corresponding session is created.
+    Session configuration files contain tde workspace window definitions and are
+    sourced and executed when the corresponding session is created.
 
-    Session configuration file names must match either the host name
+    Session configuration file names match either the host name
     ('<host-name>.tde') or the session name ('<session-name>.tde'). The host
     name takes precedence over the session name.
 
@@ -142,8 +142,8 @@ TMUX COMMANDS FILE
     (see the tmux(1) man page).
 
     tmux command file names must match either the host name ('<host-name>.tmux')
-    or the theme name ('<theme-name>.tmux'). The host name takes precedence over
-    the theme name.
+    or the tmux commands name ('<tmux-commands-name>.tmux'). The host name takes
+    precedence over the tmux commands name.
 
 LAYOUTS
     tmux preset or custom layouts can be applied to project workspace windows
@@ -181,7 +181,7 @@ VERBOSE=false
 PANES=1
 FOCUS=1
 SESSION="tde"
-THEME=
+TMUX_COMMANDS=
 WINDOW_NAME=
 LAYOUT=main-vertical
 LAUNCH_OPTS=()
@@ -283,11 +283,11 @@ validate_session_name() {
     fi
 }
 
-validate_theme_name() {
+validate_tmux_commands_name() {
     local name
     name="$1"
     if ! [[ "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.-]*$ ]]; then
-        write_error_msg "invalid --theme option '$name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods"
+        write_error_msg "invalid --tmux-commands option '$name': must begin with an alpha numberic character and can only contain only alphanumeric characters, dashes, underscores, or periods"
         exit 1
     fi
 }
@@ -519,9 +519,9 @@ while [[ $# -gt 0 ]]; do
         SESSION="$2"
         shift 2
         ;;
-    -t | --theme)
-        validate_theme_name "${2-}"
-        THEME="$2"
+    -t | --tmux-commands)
+        validate_tmux_commands_name "${2-}"
+        TMUX_COMMANDS="$2"
         shift 2
         ;;
     -w | --window-name)
@@ -549,7 +549,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ $DRY_RUN == true && $TDE_TEST == false ]]; then
-    mapfile -t TDE_SESSIONS <<<"$(tmux list-sessions -F "#{session_name}")"
+    mapfile -t TDE_SESSIONS <<<"$(tmux list-sessions -F "#{session_name}" 2>/dev/null || echo "")"
 fi
 
 if [[ -n "$TDE_CONFIG_DIR" ]]; then
@@ -642,13 +642,13 @@ for index in "${!PROJECT_DEFS[@]}"; do
             TDE_SESSIONS+=("$SESSION")
         fi
         # Source and execute optional tmux window configuration file
-        cmds="${THEME:-$SESSION}"
+        cmds="${TMUX_COMMANDS:-$SESSION}"
         tmux_cnds_file="$conf_dir/${cmds}.tmux"
         if [[ -f "$tmux_cnds_file" ]]; then
-            tmux_cmd source-file -t "$SESSION" "$tmux_cnds_file"
+            tmux_cmd source-file -t "$SESSION:" "$tmux_cnds_file"
         else
-            if [[ -n "$THEME" ]]; then
-                # --theme was explicitly defined so we expect to find the tmux command file.
+            if [[ -n "$TMUX_COMMANDS" ]]; then
+                # --tmux-commands was explicitly defined so we expect to find the tmux command file.
                 write_error_msg "tmux commands file '$tmux_cnds_file' not found"
                 exit 1
             else
