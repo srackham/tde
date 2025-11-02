@@ -95,13 +95,6 @@ OPTIONS
         must begin with an alpha numeric character and can only contain only
         alphanumeric characters, dashes, underscores, or periods.
 
-    -t, --tmux-commands TMUX_COMMANDS
-        This option sets the tmux commands file name. For example the
-        '--tmux-commands red' option sets the tmux commands file name to
-        'red.tmux' (see TMUX COMMANDS FILES). TMUX_COMMANDS must begin with an
-        alpha numeric character and can only contain only alphanumeric
-        characters, dashes, underscores, or periods.
-
     -w, --window-name WINDOW_NAME
         Sets the tmux workspace window name. Defaults to the project directory's
         base name stripped of its file name extension and with period characters
@@ -119,15 +112,8 @@ CONFIGURATION FILES
     be specified with the TDE_CONFIG_DIR environment variable.
 
 SESSION CONFIGURATION FILE
-    Session configuration files contain tde workspace window definitions and are
-    sourced and executed when the corresponding session is created.
-
-    Session configuration file names match either the host name
-    ('<host-name>.tde') or the session name ('<session-name>.tde'). The host
-    name takes precedence over the session name.
-
     A session configuration file specifies a set of project workspace windows,
-    one per line, formatted like:
+    one per line; each line is formatted like:
 
         [OPTION...] PROJECT_DIR
 
@@ -135,14 +121,17 @@ SESSION CONFIGURATION FILE
     --launch, --layout, --panes, --window-name. Omitted option values default to
     their command-line values.
 
-    Default option values can be assigned by setting PROJECT_DIR to '-'. The
-    option values in lines with PROJECT_DIR set to '-' become the new default option
-    values for subsequently created windows.
+    Session configuration files are optional and are named like
+    '<session-name>.tde'; they are sourced when the session is created.
+
+    Default option values can be assigned by setting PROJECT_DIR to '-'. Option
+    values in lines with PROJECT_DIR set to '-' become the new default option
+    values for the subsequently created windows.
 
     Blank lines and lines beginning with a '#' character are skipped.
 
     The following example session> configuration file line creates a
-    tmux window with three panes in the ~/nixos-configurations working
+    tmux window with three panes in the '~/nixos-configurations'
     directory. The first pane runs nvim, the third pane runs lazygit:
 
         --panes 3 --launch 1:nvim --launch 3:lazygit ~/nixos-configurations
@@ -156,17 +145,10 @@ SESSION CONFIGURATION FILE
 
 TMUX COMMANDS FILE
     A tmux command file contains tmux commands; they are sourced and executed by
-    the tmux 'source-file' command after a session window is created (see the
+    the tmux 'source-file' command when a session window is created (see the
     tmux(1) man page).
 
-    Unless overridden by the --tmux-commands option, the tmux commands file name
-    match either the host name ('<host-name>.tmux') or the session name
-    ('<session-name>.tmux'). The host name takes precedence over the session
-    name.
-
-    tmux command file names must match either the host name ('<host-name>.tmux')
-    or the tmux commands option ('<tmux-commands-option>.tmux'). The host name takes
-    precedence over the tmux commands name.
+    tmux commands files are optional and are named like '<session-name>.tmux'.
 
 LAYOUTS
     tmux preset or custom layouts can be applied to project workspace windows
