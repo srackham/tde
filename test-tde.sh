@@ -821,7 +821,7 @@ run_test "Bad session name" \
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
 rm_conf tde.tde
-run_test "Missing session configuration file warning; refusing attachment; one project directory argument; --verbose" \
+run_test "Missing session configuration file warning; one project directory argument; --verbose" \
     "./tde -s 'session-2' --verbose '$PROJECT1'" \
     "tde: session configuration file '/tmp/test-tde/.config/tde/session-2.tde' not found
 tmux new-session -d -s session-2 -c /tmp/test-tde/project1 -n project1
@@ -835,7 +835,7 @@ tmux attach-session -t session-2"
 TDE_CURRENT_SESSION=another-session
 write_conf session.tde "/tmp/test-tde/project1"
 write_conf session.tmux ""
-run_test "Single-entry configuration file; nested session warning" \
+run_test "Single-entry configuration file; swtich session" \
     "./tde -s 'session'" \
     "tmux new-session -d -s session -c /tmp/test-tde/project1 -n project1
 tmux set-option -t session:999 pane-base-index 1
@@ -843,7 +843,7 @@ tmux source-file -t session:999 /tmp/test-tde/.config/tde/session.tmux
 tmux select-layout -t session:999 main-vertical
 tmux select-pane -t session:999.1
 tmux select-window -t session:999
-tde: warning: refusing to attach nested tmux session 'session' inside tmux session 'another-session'"
+tmux switch-client -t session"
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=

@@ -222,7 +222,7 @@ attach_session() {
         tmux_cmd attach-session -t "$session"
         return
     fi
-    write_warning_msg "refusing to attach nested tmux session '$session' inside tmux session '$(current_session)'"
+    tmux_cmd switch-client -t "$session"
 }
 
 # Print or execute tmux commands
@@ -624,7 +624,6 @@ for index in "${!PROJECT_DEFS[@]}"; do
     # Source and execute optional tmux window configuration file
     conf_file="$CONF_DIR/$SESSION.tmux"
     if [ -f "$conf_file" ]; then
-        write_verbose_msg "reading tmux commands file '$conf_file'"
         tmux_cmd source-file -t "$SESSION:$WIN_INDEX" "$conf_file"
     else
         write_verbose_msg "tmux commands file '$conf_file' not found"
