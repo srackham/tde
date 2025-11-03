@@ -129,7 +129,8 @@ TMUX COMMANDS FILE
     the tmux 'source-file' command when a session window is created (see the
     tmux(1) man page).
 
-    tmux commands files are optional and are named like '<session-name>.tmux'.
+    tmux commands files are optional and are named like '<session-name>.tmux';
+    fall back to 'tde.tmux' if '<session-name>.tmux' does not exist.
 
 LAYOUTS
     tmux preset or custom layouts can be applied to project workspace windows
@@ -627,6 +628,15 @@ for index in "${!PROJECT_DEFS[@]}"; do
         tmux_cmd source-file -t "$SESSION:$WIN_INDEX" "$conf_file"
     else
         write_verbose_msg "tmux commands file '$conf_file' not found"
+        # Attempt to fall back to tde.tmux
+        if [ "$SESSION" != "tde" ]; then
+            conf_file="$CONF_DIR/tde.tmux"
+            if [ -f "$conf_file" ]; then
+                tmux_cmd source-file -t "$SESSION:$WIN_INDEX" "$conf_file"
+            else
+                write_verbose_msg "tmux commands file '$conf_file' not found"
+            fi
+        fi
     fi
 
     for ((i = panes; i > 1; i--)); do

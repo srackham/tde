@@ -148,7 +148,8 @@ TMUX COMMANDS FILE
     the tmux 'source-file' command when a session window is created (see the
     tmux(1) man page).
 
-    tmux commands files are optional and are named like '<session-name>.tmux'.
+    tmux commands files are optional and are named like '<session-name>.tmux';
+    fall back to 'tde.tmux' if '<session-name>.tmux' does not exist.
 
 LAYOUTS
     tmux preset or custom layouts can be applied to project workspace windows

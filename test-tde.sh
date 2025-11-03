@@ -821,12 +821,29 @@ run_test "Bad session name" \
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
 rm_conf tde.tde
-run_test "Missing session configuration file warning; one project directory argument; --verbose" \
+run_test "Missing session configuration file warning; fall back to tde.tmux commands file; one project directory argument; --verbose" \
     "./tde -s 'session-2' --verbose '$PROJECT1'" \
     "tde: session configuration file '/tmp/test-tde/.config/tde/session-2.tde' not found
 tmux new-session -d -s session-2 -c /tmp/test-tde/project1 -n project1
 tmux set-option -t session-2:999 pane-base-index 1
 tde: tmux commands file '/tmp/test-tde/.config/tde/session-2.tmux' not found
+tde: tmux commands file '/tmp/test-tde/.config/tde/tde.tmux' not found
+tmux select-layout -t session-2:999 main-vertical
+tmux select-pane -t session-2:999.1
+tmux select-window -t session-2:999
+tmux attach-session -t session-2"
+
+TDE_SESSIONS=
+TDE_CURRENT_SESSION=
+write_conf session-2.tde ""
+write_conf tde.tmux ""
+run_test "Fall back to tde.tmux commands file; one project directory argument; --verbose" \
+    "./tde -s 'session-2' --verbose '$PROJECT1'" \
+    "tde: reading session configuration file '/tmp/test-tde/.config/tde/session-2.tde'
+tmux new-session -d -s session-2 -c /tmp/test-tde/project1 -n project1
+tmux set-option -t session-2:999 pane-base-index 1
+tde: tmux commands file '/tmp/test-tde/.config/tde/session-2.tmux' not found
+tmux source-file -t session-2:999 /tmp/test-tde/.config/tde/tde.tmux
 tmux select-layout -t session-2:999 main-vertical
 tmux select-pane -t session-2:999.1
 tmux select-window -t session-2:999
@@ -849,6 +866,7 @@ TDE_SESSIONS=
 TDE_CURRENT_SESSION=
 rm_conf session.tde
 rm_conf session.tmux
+rm_conf tde.tmux
 run_test "One project directory argument" \
     "./tde -s 'session' '$PROJECT1'" \
     "tmux new-session -d -s session -c /tmp/test-tde/project1 -n project1
