@@ -566,6 +566,12 @@ run_test "Invalid --launch pane number (non-numeric)" \
 
 TDE_SESSIONS=tde
 TDE_CURRENT_SESSION=tde
+run_test "Invalid --launch command (command is blank)" \
+    "./tde -p 2 -l 1: $PROJECT1" \
+    "tde: error: invalid --launch option '1:': missing launch command" 1
+
+TDE_SESSIONS=tde
+TDE_CURRENT_SESSION=tde
 run_test "Number of panes set by launch option" \
     "./tde -l 3:ls -v $PROJECT1" \
     "tde: number of panes increased to 3 to accomodate launch options: '3:ls'
