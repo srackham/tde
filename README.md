@@ -16,10 +16,6 @@ mkdir -p ~/.config/tde
 curl -L -o ~/.config/tde/tde.tmux https://raw.githubusercontent.com/srackham/tde/main/tde.tmux
 ```
 
-## Examples
-
-TODO:
-
 ## Usage
 
 ```
@@ -174,6 +170,18 @@ LAYOUTS
 
 ## Tips
 
-- Sessions can be built from multiple session configuration files using the same `--session` option.
-- Use the shell `clear` command to create a null launch option, this is handy if you want to override the default launch options, for example, `--launch 1:clear`.
+- Examples of `tde` configuration files and tmux command files can be found in the [tde Github repository](https://github.com/srackham/tde).
+
+- Use an alias to ensure host-specific default sessions, for example:
+
+      alias tde="tde --session $(hostname)"
+
+  You can override the host name session because, if there are multiple session options, the last session option is used.
+
+- Use tmux command files to set session theme colors. The following `devel.tmux` tmux commands file includes the `blue.tmux` file to colorize the `devel` session:
+
+      set-option main-pane-width 50%
+      source-file ~/.config/tde/blue.tmux
+
+- Use the shell `clear` command to create a null launch option, this is handy if you want to override previously set default launch options, for example, `--launch 1:clear`.
 - Use the tmux `run-shell` to run shell commands synchronously from tmux commands files.
