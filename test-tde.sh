@@ -826,6 +826,17 @@ run_test "Bad session name" \
 
 TDE_SESSIONS=
 TDE_CURRENT_SESSION=
+run_test "Last session option takes precedence" \
+    "./tde --session session1 --session session2 $PROJECT1" \
+    "tmux new-session -d -s session2 -c /tmp/test-tde/project1 -n project1
+tmux set-option -t session2:999 pane-base-index 1
+tmux select-layout -t session2:999 main-vertical
+tmux select-pane -t session2:999.1
+tmux select-window -t session2:999
+tmux attach-session -t session2"
+
+TDE_SESSIONS=
+TDE_CURRENT_SESSION=
 rm_conf tde.tde
 run_test "Missing session configuration file warning; fall back to tde.tmux commands file; one project directory argument; --verbose" \
     "./tde -s 'session-2' --verbose '$PROJECT1'" \
